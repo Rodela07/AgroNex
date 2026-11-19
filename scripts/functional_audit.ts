@@ -6,7 +6,7 @@
 import { INITIAL_USER, INITIAL_LANDS, INITIAL_LIVESTOCK_FARMS, INITIAL_ANIMALS, INITIAL_PONDS, INITIAL_LISTINGS, INITIAL_INQUIRIES, INITIAL_ORDERS, INITIAL_PRICE_ALERTS, INITIAL_MARKET_PRICES, INITIAL_EXPERTS, INITIAL_CONSULTATIONS, INITIAL_REMINDERS } from '../src/data/mockData.ts';
 import { BANGLADESH_DISTRICTS } from '../src/data/bangladeshGeo.ts';
 import { formatCurrency, formatNumber, toBengaliDigits } from '../src/utils/formatters.ts';
-import type { LandProfile, LandUnit, FertilizerPlan, LivestockFarm, AnimalRecord, PondProfile, MarketplaceListing, NegotiationInquiry, OrderRecord, PriceAlert, ConsultationBooking, CalendarReminder } from '../src/types/index.ts';
+import type { LandProfile, LandUnit, FertilizerPlan, LivestockFarm, AnimalRecord, PondProfile, MarketplaceListing, NegotiationInquiry, OrderRecord, PriceAlert, ConsultationBooking, CalendarReminder, ListingStatus, SectorType } from '../src/types/index.ts';
 
 interface TestResult {
   name: string;
@@ -74,7 +74,7 @@ console.log('================================================================\n'
     name: 'উত্তর শিমুলিয়া প্লট-৩',
     size: 50,
     unit: 'decimal',
-    soilType: 'Clay Loam (এটেল দোআঁশ)',
+    soilType: 'Clay (এঁটেল)',
     division: 'Rajshahi',
     district: 'Bogura',
     upazila: 'Shibganj',
@@ -368,13 +368,13 @@ console.log('================================================================\n'
 // -------------------------------------------------------------
 {
   const search = 'ধান';
-  const sector = 'agriculture';
-  const district = 'Bogura';
+  let sector: string = 'agriculture';
+  let district: string = 'Bogura';
 
   const matches = INITIAL_LISTINGS.filter(l => {
     const matchSearch = l.productName.toLowerCase().includes(search.toLowerCase()) || l.description.includes(search);
-    const matchSector = sector === 'all' || l.sector === sector;
-    const matchDistrict = district === 'all' || l.district === district;
+    const matchSector = (sector as string) === 'all' || l.sector === sector;
+    const matchDistrict = (district as string) === 'all' || l.district === district;
     return matchSearch && matchSector && matchDistrict;
   });
 
@@ -452,13 +452,20 @@ console.log('================================================================\n'
 // TEST 11: Order Acceptance, Stock Depletion & Digital Receipt
 // -------------------------------------------------------------
 {
-  let listings = [
+  let listings: Array<{
+    id: string;
+    quantity: number;
+    status: ListingStatus;
+    pricePerUnit: number;
+    unit: 'maund';
+    productName: string;
+  }> = [
     {
       id: 'lst_stock_1',
       quantity: 50,
-      status: 'published' as const,
+      status: 'published',
       pricePerUnit: 1300,
-      unit: 'maund' as const,
+      unit: 'maund',
       productName: 'ব্রি ধান-২৮'
     }
   ];
@@ -547,7 +554,8 @@ console.log('================================================================\n'
     condition: 'at_or_above',
     isActive: true,
     currentObservedPrice: 1320,
-    source: 'কৃষি বিপণন অধিদপ্তর (DAM)'
+    source: 'কৃষি বিপণন অধিদপ্তর (DAM)',
+    updatedAt: '2026-11-19 10:00 AM'
   };
 
   const testTrigger = (observedPrice: number, targetPrice: number, condition: 'at_or_above' | 'at_or_below') => {
@@ -597,7 +605,7 @@ console.log('================================================================\n'
   const rx = '১. ট্রাইসাইক্লাজল ৭৫ ডব্লিউপি (যেমন ট্রুপার বা দিফা) প্রতি লিটার জলে ০.৭৫ গ্রাম মিশিয়ে বিকেলে স্প্রে করুন।\n২. নাইট্রোজেন সার সাময়িক স্থগিত রাখুন।';
   consultations = consultations.map(c => c.id === 'cns_test_1' ? { ...c, status: 'completed', prescription: rx } : c);
   const completedCns = consultations.find(c => c.id === 'cns_test_1');
-  assert(completedCns?.status === 'completed' && completedCns.prescription?.includes('ট্রাইসাইক্লাজল'),
+  assert(Boolean(completedCns?.status === 'completed' && completedCns?.prescription?.includes('ট্রাইসাইক্লাজল')),
     'Doctor Prescription Issuance', 'Experts', 'Digital prescription issued and case marked as completed');
 }
 
