@@ -34,7 +34,7 @@ export interface UserProfile {
 }
 
 // 7. Agriculture
-export type LandUnit = 'decimal' | 'bigha' | 'acre' | 'hectare';
+export type LandUnit = 'decimal' | 'bigha' | 'acre' | 'hectare' | 'katha';
 
 export interface LandProfile {
   id: string;
@@ -198,7 +198,7 @@ export interface HatcheryListing {
 }
 
 // 10. Marketplace
-export type ProduceUnit = 'maund' | 'kg' | 'quintal';
+export type ProduceUnit = 'maund' | 'kg' | 'quintal' | 'piece' | 'ton';
 export type QualityGrade = 'Grade A (প্রিমিয়াম)' | 'Grade B (স্ট্যান্ডার্ড)' | 'Standard (সাধারণ)' | 'Export Quality (রপ্তানি মান)';
 export type ListingStatus = 'draft' | 'published' | 'reserved' | 'sold' | 'paused' | 'expired';
 

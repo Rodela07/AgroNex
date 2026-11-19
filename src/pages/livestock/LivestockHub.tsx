@@ -36,6 +36,7 @@ import { formatCurrency, formatNumber, toBengaliDigits } from '../../utils/forma
 export const LivestockHub: React.FC<{ initialSubTab?: string }> = ({ initialSubTab = 'overview' }) => {
   const { 
     language, 
+    user,
     livestockFarms, 
     addLivestockFarm, 
     updateLivestockFarm, 
@@ -981,9 +982,9 @@ export const LivestockHub: React.FC<{ initialSubTab?: string }> = ({ initialSubT
                           expertId: vet.id,
                           expertName: vet.nameBn,
                           category: 'veterinary',
-                          farmerId: 'usr_001',
-                          farmerName: 'মো: রফিকুল ইসলাম',
-                          farmerPhone: '01712345678',
+                          farmerId: user.id,
+                          farmerName: user.name,
+                          farmerPhone: user.phone,
                           sector: 'livestock',
                           topic: 'জরুরি পশু চিকিৎসা (Emergency Vet)',
                           urgency: 'emergency',

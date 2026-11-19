@@ -1,21 +1,24 @@
 import type { Language } from '../types/index.ts';
 
-export const toBengaliDigits = (num: number | string): string => {
+export const toBengaliDigits = (num: number | string | null | undefined): string => {
+  if (num === null || num === undefined) return '';
   const bengaliDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
   return num
     .toString()
     .replace(/[0-9]/g, (digit) => bengaliDigits[parseInt(digit, 10)]);
 };
 
-export const formatNumber = (num: number, lang: Language): string => {
+export const formatNumber = (num: number | null | undefined, lang: Language): string => {
+  const safeNum = typeof num === 'number' && !isNaN(num) ? num : 0;
   if (lang === 'bn') {
-    return toBengaliDigits(num.toLocaleString('en-US'));
+    return toBengaliDigits(safeNum.toLocaleString('en-US'));
   }
-  return num.toLocaleString('en-US');
+  return safeNum.toLocaleString('en-US');
 };
 
-export const formatCurrency = (amount: number, lang: Language): string => {
-  const formatted = formatNumber(amount, lang);
+export const formatCurrency = (amount: number | null | undefined, lang: Language): string => {
+  const safeAmount = typeof amount === 'number' && !isNaN(amount) ? amount : 0;
+  const formatted = formatNumber(safeAmount, lang);
   return lang === 'bn' ? `৳ ${formatted}` : `BDT ${formatted}`;
 };
 

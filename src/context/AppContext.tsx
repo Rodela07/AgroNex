@@ -580,6 +580,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return m;
     }));
 
+    // Update alerts with latest observed price
+    setPriceAlerts((prev) => prev.map((a) => {
+      const isAlertMatch = a.productName.includes(targetItemName) || targetItemName.includes(a.productName) || a.productName.includes(idOrName) || idOrName.includes(a.productName);
+      if (isAlertMatch) {
+        return {
+          ...a,
+          currentObservedPrice: newPrice,
+          updatedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        };
+      }
+      return a;
+    }));
+
     // Check alerts
     priceAlerts.forEach((a) => {
       if (a.isActive && (a.productName.includes(targetItemName) || targetItemName.includes(a.productName) || a.productName.includes(idOrName) || idOrName.includes(a.productName))) {
@@ -587,7 +600,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                             (a.condition === 'at_or_below' && newPrice <= a.targetPrice);
         if (isTriggered) {
           const alertNotif: NotificationItem = {
-            id: 'ntf_' + Date.now(),
+            id: 'ntf_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
             userId: user.id,
             sector: a.sector,
             title: `Price Alert Triggered: ${a.productName}`,

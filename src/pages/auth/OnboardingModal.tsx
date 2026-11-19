@@ -568,8 +568,10 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onClos
                           className="w-1/3 px-1 py-1.5 text-xs rounded-lg border border-softBorder bg-white"
                         >
                           <option value="decimal">শতাংশ</option>
+                          <option value="katha">কাঠা</option>
                           <option value="bigha">বিঘা</option>
                           <option value="acre">একর</option>
+                          <option value="hectare">হেক্টর</option>
                         </select>
                       </div>
                     </div>

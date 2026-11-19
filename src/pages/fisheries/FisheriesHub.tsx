@@ -37,6 +37,7 @@ import { formatCurrency, formatNumber, toBengaliDigits } from '../../utils/forma
 export const FisheriesHub: React.FC<{ initialSubTab?: string }> = ({ initialSubTab = 'overview' }) => {
   const { 
     language, 
+    user,
     ponds, 
     addPond, 
     updatePond, 
@@ -902,9 +903,9 @@ export const FisheriesHub: React.FC<{ initialSubTab?: string }> = ({ initialSubT
                           expertId: exp.id,
                           expertName: exp.nameBn,
                           category: 'fisheries',
-                          farmerId: 'usr_001',
-                          farmerName: 'মো: রফিকুল ইসলাম',
-                          farmerPhone: '01712345678',
+                          farmerId: user.id,
+                          farmerName: user.name,
+                          farmerPhone: user.phone,
                           sector: 'fisheries',
                           topic: 'পুকুর ও মাছের রোগবালাই ব্যবস্থাপনা',
                           urgency: 'normal',

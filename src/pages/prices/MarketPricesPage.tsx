@@ -28,6 +28,7 @@ import { formatCurrency, formatNumber, toBengaliDigits } from '../../utils/forma
 export const MarketPricesPage: React.FC = () => {
   const { 
     language, 
+    user,
     marketPrices, 
     priceAlerts, 
     addPriceAlert, 
@@ -93,7 +94,7 @@ export const MarketPricesPage: React.FC = () => {
   const handleCreateAlert = (e: React.FormEvent) => {
     e.preventDefault();
     addPriceAlert({
-      userId: 'usr_001',
+      userId: user.id,
       productName: alertProduct,
       sector: alertSector,
       district: alertDistrict,
@@ -560,7 +561,7 @@ export const MarketPricesPage: React.FC = () => {
               <label className="block font-bold text-primaryText mb-1">পরিমাপের একক</label>
               <select
                 value={alertUnit}
-                onChange={(e) => setAlertUnit(e.target.value as any)}
+                onChange={(e) => setAlertUnit(e.target.value as ProduceUnit)}
                 className="input-field"
               >
                 <option value="maund">মণ (৪০ কেজি)</option>

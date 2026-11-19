@@ -36,6 +36,7 @@ import { formatCurrency, formatNumber, toBengaliDigits } from '../../utils/forma
 export const AgricultureHub: React.FC<{ initialSubTab?: string }> = ({ initialSubTab = 'overview' }) => {
   const { 
     language, 
+    user,
     lands, 
     addLand, 
     updateLand, 
@@ -106,6 +107,8 @@ export const AgricultureHub: React.FC<{ initialSubTab?: string }> = ({ initialSu
       case 'bigha': return size * 33; // Standard 1 Bigha = 33 Decimals in BD
       case 'acre': return size * 100; // 1 Acre = 100 Decimals
       case 'hectare': return size * 247.1; // 1 Hectare ~ 247.1 Decimals
+      case 'katha': return size * 1.65; // 1 Katha = 1.65 Decimals (20 Katha = 1 Bigha)
+      default: return size;
     }
   };
 
@@ -114,6 +117,13 @@ export const AgricultureHub: React.FC<{ initialSubTab?: string }> = ({ initialSu
     setLandName('');
     setLandSize(33);
     setLandUnit('decimal');
+    setSoilType('Loam (দোআঁশ)');
+    setDistrict('Bogura');
+    setUpazila('Shibganj');
+    setVillage('Gokul');
+    setWaterSource('Deep Tubewell');
+    setSeason('Rabi (রবি)');
+    setCrop('বোরো ধান (Boro Rice)');
     setShowLandModal(true);
   };
 
@@ -288,9 +298,9 @@ export const AgricultureHub: React.FC<{ initialSubTab?: string }> = ({ initialSu
       expertId: selectedExpertForBooking.id,
       expertName: selectedExpertForBooking.nameBn,
       category: 'agriculturist',
-      farmerId: 'usr_001',
-      farmerName: 'মো: রফিকুল ইসলাম',
-      farmerPhone: '01712345678',
+      farmerId: user.id,
+      farmerName: user.name,
+      farmerPhone: user.phone,
       sector: 'agriculture',
       topic: bookingTopic || 'ফসলের পোকার আক্রমণ ও রোগবালাই সমাধান',
       urgency: bookingUrgency,
@@ -742,6 +752,7 @@ export const AgricultureHub: React.FC<{ initialSubTab?: string }> = ({ initialSu
                   className="input-field w-1/3 font-bold"
                 >
                   <option value="decimal">শতাংশ</option>
+                  <option value="katha">কাঠা (১.৬৫ শতক)</option>
                   <option value="bigha">বিঘা (৩৩ শতক)</option>
                   <option value="acre">একর (১০০ শতক)</option>
                   <option value="hectare">হেক্টর</option>
@@ -1211,6 +1222,7 @@ export const AgricultureHub: React.FC<{ initialSubTab?: string }> = ({ initialSu
                 className="input-field font-semibold"
               >
                 <option value="decimal">শতাংশ (Decimal)</option>
+                <option value="katha">কাঠা (Katha)</option>
                 <option value="bigha">বিঘা (Bigha)</option>
                 <option value="acre">একর (Acre)</option>
                 <option value="hectare">হেক্টর (Hectare)</option>
