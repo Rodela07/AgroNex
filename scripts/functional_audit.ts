@@ -6,6 +6,7 @@
 import { INITIAL_USER, INITIAL_LANDS, INITIAL_LIVESTOCK_FARMS, INITIAL_ANIMALS, INITIAL_PONDS, INITIAL_LISTINGS, INITIAL_INQUIRIES, INITIAL_ORDERS, INITIAL_PRICE_ALERTS, INITIAL_MARKET_PRICES, INITIAL_EXPERTS, INITIAL_CONSULTATIONS, INITIAL_REMINDERS } from '../src/data/mockData.ts';
 import { BANGLADESH_DISTRICTS } from '../src/data/bangladeshGeo.ts';
 import { formatCurrency, formatNumber, toBengaliDigits } from '../src/utils/formatters.ts';
+import { getAgriAiResponse } from '../src/services/agriAiService.ts';
 import type { LandProfile, LandUnit, FertilizerPlan, LivestockFarm, AnimalRecord, PondProfile, MarketplaceListing, NegotiationInquiry, OrderRecord, PriceAlert, ConsultationBooking, CalendarReminder, ListingStatus, SectorType } from '../src/types/index.ts';
 
 interface TestResult {
@@ -647,6 +648,26 @@ console.log('================================================================\n'
   const currencyEn = formatCurrency(2580, 'en');
   assert(currencyBn.includes('৳') && currencyEn.includes('BDT'), 'Bilingual Currency Symbol Formatting', 'Localization',
     `BN: ${currencyBn} vs EN: ${currencyEn}`);
+}
+
+// -------------------------------------------------------------
+// TEST 16: Bilingual Agri AI Chatbot Intelligence & Emergency Detection
+// -------------------------------------------------------------
+{
+  // Bengali Rice & Fertilizer query
+  const resBn = getAgriAiResponse('বোরো ধানের সার প্রয়োগ মাত্রা কত?', 'bn');
+  assert(resBn.reply.includes('ইউরিয়া') && resBn.actionCard?.type === 'fertilizer',
+    'AI Chatbot Bengali Query Resolution', 'AI Chatbot', 'AI answered Boro rice fertilizer dosage in natural Bengali with calculator action card');
+
+  // English Potato Late Blight query
+  const resEn = getAgriAiResponse('How to treat potato late blight disease?', 'en');
+  assert(resEn.reply.includes('Mancozeb') || resEn.reply.includes('Ridomil'),
+    'AI Chatbot English Disease Query Resolution', 'AI Chatbot', 'AI provided Dithane M-45 and Ridomil treatment for potato blight in English');
+
+  // Emergency FMD / क्षুরারোগ detection
+  const resEmergency = getAgriAiResponse('গাভীর মুখে ঘা ও লালা ঝরছে ক্ষুরারোগ হয়েছে', 'bn');
+  assert(resEmergency.isEmergency === true && resEmergency.actionCard?.type === 'vet_booking',
+    'AI Chatbot Emergency Escalation Detection', 'AI Chatbot', 'AI detected critical FMD symptoms and escalated to emergency vet consultation');
 }
 
 // -------------------------------------------------------------

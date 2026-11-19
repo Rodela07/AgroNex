@@ -20,7 +20,8 @@ import {
   ChevronDown,
   LogOut,
   LogIn,
-  User
+  User,
+  Bot
 } from 'lucide-react';
 import { UserRole } from '../../types';
 
@@ -111,6 +112,16 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMobileMenu, onSelectTab })
 
         {/* Right Actions */}
         <div className="flex items-center space-x-2 sm:space-x-3">
+
+          {/* Global Agri AI Assistant Shortcut */}
+          <button
+            onClick={() => onSelectTab && onSelectTab('ai')}
+            className="flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-forest-50 hover:bg-forest-100 text-forest-dark border border-forest/20 text-xs font-bold transition shadow-2xs cursor-pointer active:scale-95"
+            title={language === 'bn' ? 'কৃষি এআই সহকারী' : 'Agri AI Assistant'}
+          >
+            <Bot className="w-4 h-4 text-forest-leaf" />
+            <span className="hidden sm:inline">{language === 'bn' ? 'কৃষি এআই' : 'Agri AI'}</span>
+          </button>
 
           {/* Phase 2 Roadmap shortcut button */}
           <button

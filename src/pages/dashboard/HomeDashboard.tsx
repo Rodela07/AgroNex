@@ -25,9 +25,10 @@ import { formatCurrency, formatNumber, toBengaliDigits } from '../../utils/forma
 
 interface HomeDashboardProps {
   onNavigate: (tab: string, subtab?: string) => void;
+  onOpenChatbot?: (initialQuery?: string) => void;
 }
 
-export const HomeDashboard: React.FC<HomeDashboardProps> = ({ onNavigate }) => {
+export const HomeDashboard: React.FC<HomeDashboardProps> = ({ onNavigate, onOpenChatbot }) => {
   const { 
     language, 
     user, 
@@ -94,6 +95,40 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({ onNavigate }) => {
         </div>
       </div>
 
+      {/* Friendly AI Chat Prompt Banner */}
+      <div className="bg-gradient-to-r from-forest to-forest-dark p-4 sm:p-5 rounded-2xl text-white shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="flex items-center space-x-3.5 w-full md:w-auto">
+          <div className="w-12 h-12 rounded-2xl bg-white/15 border border-white/20 flex items-center justify-center shrink-0">
+            <Bot className="w-7 h-7 text-forest-leaf" />
+          </div>
+          <div>
+            <div className="flex items-center space-x-2">
+              <h2 className="text-base sm:text-lg font-bold leading-tight">
+                {language === 'bn' ? 'যেকোনো কৃষি বা খামারের প্রশ্ন করুন' : 'Ask Any Agricultural Question'}
+              </h2>
+              <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-forest-leaf/25 text-forest-leaf border border-forest-leaf/40">
+                AI ২৪/৭
+              </span>
+            </div>
+            <p className="text-xs text-rice/80 mt-0.5">
+              {language === 'bn' 
+                ? 'বাংলা বা ইংরেজিতে লিখুন — সার হিসাব, রোগবালাই প্রতিকার বা বাজারদর' 
+                : 'Crops, BARC fertilizers, livestock diseases, fish pond care & market rates'}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center space-x-2 w-full md:w-auto">
+          <button
+            onClick={() => onOpenChatbot ? onOpenChatbot() : onNavigate('agriculture', 'troubleshoot')}
+            className="w-full md:w-auto px-5 py-2.5 rounded-xl bg-forest-leaf hover:bg-forest-leaf/90 text-forest-dark font-bold text-xs sm:text-sm shadow-xs transition flex items-center justify-center space-x-2 cursor-pointer active:scale-95"
+          >
+            <Sparkles className="w-4 h-4 text-forest-dark" />
+            <span>{language === 'bn' ? 'এআই সহকারীর সাথে কথা বলুন' : 'Chat with Agri AI'}</span>
+          </button>
+        </div>
+      </div>
+
       {/* Weather Section with Multi-Sector Actionable Recommendations */}
       <WeatherWidget />
 
@@ -110,8 +145,8 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({ onNavigate }) => {
 
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
           <button
-            onClick={() => onNavigate('agriculture', 'troubleshoot')}
-            className="flex flex-col items-center p-3 rounded-xl bg-forest/10 hover:bg-forest/15 border border-forest/20 text-forest text-center transition group active:scale-95 min-h-[72px] justify-center"
+            onClick={() => onOpenChatbot ? onOpenChatbot() : onNavigate('agriculture', 'troubleshoot')}
+            className="flex flex-col items-center p-3 rounded-xl bg-forest/10 hover:bg-forest/15 border border-forest/20 text-forest text-center transition group active:scale-95 min-h-[72px] justify-center cursor-pointer"
           >
             <Bot className="w-5 h-5 text-forest-leaf mb-1 group-hover:scale-110 transition" />
             <span className="text-xs font-bold">{language === 'bn' ? 'কৃষি এআই' : 'Ask AI'}</span>

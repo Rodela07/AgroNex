@@ -15,7 +15,8 @@ import {
   CalendarCheck,
   CheckCircle2,
   LogIn,
-  LogOut
+  LogOut,
+  Bot
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -43,6 +44,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
       labelEn: 'Home Dashboard',
       icon: Home,
       badge: null
+    },
+    {
+      id: 'ai',
+      labelBn: 'এআই কৃষি সহকারী',
+      labelEn: 'Agri AI Assistant',
+      icon: Bot,
+      color: 'text-forest-leaf',
+      badge: 'AI 24/7'
     },
     {
       id: 'agriculture',

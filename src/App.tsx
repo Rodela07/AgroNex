@@ -7,6 +7,8 @@ import { ToastContainer } from './components/common/ToastContainer';
 import { Phase2Modal } from './components/roadmap/Phase2Modal';
 import { OnboardingModal } from './pages/auth/OnboardingModal';
 import { LoginPage } from './pages/auth/LoginPage';
+import { AgriChatbotModal } from './components/ai/AgriChatbotModal';
+import { FloatingAiLauncher } from './components/ai/FloatingAiLauncher';
 
 // Pages
 import { HomeDashboard } from './pages/dashboard/HomeDashboard';
@@ -28,8 +30,14 @@ export const App: React.FC = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
   const [showOnboarding, setShowOnboarding] = useState<boolean>(false);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState<boolean>(false);
+  const [showChatbot, setShowChatbot] = useState<boolean>(false);
+  const [chatbotQuery, setChatbotQuery] = useState<string>('');
 
   const handleNavigate = (tab: string, subtab?: string) => {
+    if (tab === 'chatbot' || tab === 'ai') {
+      setShowChatbot(true);
+      return;
+    }
     setCurrentTab(tab);
     if (subtab) {
       setCurrentSubTab(subtab);
@@ -84,7 +92,15 @@ export const App: React.FC = () => {
 
         {/* Main Content Area */}
         <main className="flex-1 p-3.5 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full pb-24 sm:pb-20 md:pb-8 overflow-y-auto">
-          {currentTab === 'dashboard' && <HomeDashboard onNavigate={handleNavigate} />}
+          {currentTab === 'dashboard' && (
+            <HomeDashboard 
+              onNavigate={handleNavigate} 
+              onOpenChatbot={(query) => {
+                setChatbotQuery(query || '');
+                setShowChatbot(true);
+              }}
+            />
+          )}
           {currentTab === 'agriculture' && <AgricultureHub key={`agriculture_${currentSubTab}`} initialSubTab={currentSubTab} />}
           {currentTab === 'livestock' && <LivestockHub key={`livestock_${currentSubTab}`} initialSubTab={currentSubTab} />}
           {currentTab === 'fisheries' && <FisheriesHub key={`fisheries_${currentSubTab}`} initialSubTab={currentSubTab} />}
@@ -105,7 +121,17 @@ export const App: React.FC = () => {
         onCloseDrawer={() => setMobileDrawerOpen(false)}
       />
 
-      {/* Floating System Modals */}
+      {/* Floating System Modals & AI Chatbot */}
+      <FloatingAiLauncher onClick={() => setShowChatbot(true)} />
+      <AgriChatbotModal
+        isOpen={showChatbot}
+        onClose={() => {
+          setShowChatbot(false);
+          setChatbotQuery('');
+        }}
+        onNavigate={handleNavigate}
+        initialQuery={chatbotQuery}
+      />
       <Phase2Modal />
       <OnboardingModal isOpen={showOnboarding} onClose={() => setShowOnboarding(false)} />
       <ToastContainer />
