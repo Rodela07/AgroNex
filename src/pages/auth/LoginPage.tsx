@@ -687,3 +687,4 @@ export const LoginPage: React.FC<LoginPageProps> = ({
     </div>
   );
 };
+
