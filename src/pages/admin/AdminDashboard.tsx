@@ -15,11 +15,14 @@ import {
   Activity, 
   Check, 
   Clock,
-  Sparkles
+  Sparkles,
+  BarChart2,
+  FileText
 } from 'lucide-react';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import { Modal } from '../../components/common/Modal';
 import { ConfirmDialog } from '../../components/common/ConfirmDialog';
+import { EmptyState } from '../../components/common/EmptyState';
 import { formatCurrency, formatNumber, toBengaliDigits } from '../../utils/formatters';
 
 export const AdminDashboard: React.FC = () => {
@@ -36,7 +39,7 @@ export const AdminDashboard: React.FC = () => {
     showToast 
   } = useApp();
 
-  const [adminTab, setAdminTab] = useState<'overview' | 'users' | 'experts' | 'listings' | 'prices' | 'ai_reports'>('overview');
+  const [adminTab, setAdminTab] = useState<'overview' | 'experts' | 'listings' | 'prices' | 'ai_reports'>('overview');
 
   // Price Edit State
   const [editingPriceItem, setEditingPriceItem] = useState<any | null>(null);
@@ -84,60 +87,72 @@ export const AdminDashboard: React.FC = () => {
     showToast('বিশেষজ্ঞের ভেরিফিকেশন স্ট্যাটাস হালনাগাদ করা হয়েছে', 'info');
   };
 
+  const tabs = [
+    { id: 'overview', icon: BarChart2, label: 'সিস্টেম অ্যানালিটিক্স' },
+    { id: 'experts', icon: ShieldCheck, label: 'বিশেষজ্ঞ ভেরিফিকেশন' },
+    { id: 'listings', icon: ShoppingBag, label: 'লিস্টিং মডারেশন' },
+    { id: 'prices', icon: TrendingUp, label: 'বাজার দর নিয়ন্ত্রণ' },
+    { id: 'ai_reports', icon: Bot, label: 'এআই রিপোর্ট ও ফিডব্যাক' }
+  ];
+
   return (
     <div className="space-y-6">
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-softBorder shadow-2xs">
-        <div className="flex items-center space-x-2">
-          <span className="p-2 rounded-xl bg-purple-100 text-purple-900">
+        <div className="flex items-center space-x-3">
+          <span className="p-2.5 rounded-xl bg-purple-100 text-purple-900 border border-purple-200 shadow-2xs">
             <ShieldCheck className="w-5 h-5 text-purple-700" />
           </span>
           <div>
             <h1 className="text-xl font-bold text-forest-dark">
-              {language === 'bn' ? 'সিস্টেম অ্যাডমিন প্যানেল (Administrator Portal)' : 'System Administrator Portal'}
+              {language === 'bn' ? 'সিস্টেম অ্যাডমিন ও গভর্ন্যান্স পোর্টাল' : 'System Administrator & Governance Portal'}
             </h1>
-            <p className="text-xs text-secondaryText">
-              ব্যবহারকারী ব্যবস্থাপনা, বিশেষজ্ঞ ও বিক্রেতা যাচাই, মার্কেটপ্লেস মডারেশন ও আঞ্চলিক বাজার দর নিয়ন্ত্রণ
+            <p className="text-xs text-secondaryText leading-relaxed">
+              {language === 'bn' 
+                ? 'কৃষক ও বিশেষজ্ঞ যাচাই, মার্কেটপ্লেস লিস্টিং মডারেশন, আঞ্চলিক বাজার দর নিয়ন্ত্রণ ও অডিট ট্রেইল' 
+                : 'User governance, expert credentials verification, marketplace moderation & DAM benchmark pricing'}
             </p>
           </div>
         </div>
 
-        <span className="px-3 py-1 text-xs font-bold rounded-full bg-purple-100 text-purple-900 border border-purple-200">
-          Super Admin Access
+        <span className="px-3 py-1.5 text-xs font-bold rounded-full bg-purple-100 text-purple-900 border border-purple-200 self-start sm:self-auto">
+          Super Admin Privileges
         </span>
       </div>
 
       {/* Admin Sub-Tabs */}
-      <div className="flex items-center space-x-1 border-b border-softBorder overflow-x-auto pb-1 text-xs font-bold">
-        {[
-          { id: 'overview', label: 'সিস্টেম অ্যানালিটিক্স' },
-          { id: 'experts', label: 'বিশেষজ্ঞ ভেরিফিকেশন' },
-          { id: 'listings', label: 'লিস্টিং মডারেশন' },
-          { id: 'prices', label: 'আঞ্চলিক বাজার দর নিয়ন্ত্রণ' },
-          { id: 'ai_reports', label: 'এআই রিপোর্ট ও ফিডব্যাক' }
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setAdminTab(tab.id as any)}
-            className={`px-4 py-2.5 rounded-xl whitespace-nowrap transition ${
-              adminTab === tab.id 
-                ? 'bg-purple-900 text-white shadow-2xs' 
-                : 'text-secondaryText hover:text-purple-900 hover:bg-rice'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
+      <div className="flex items-center gap-2 border-b border-softBorder pb-2 overflow-x-auto scrollbar-none">
+        {tabs.map((tab) => {
+          const Icon = tab.icon;
+          const isActive = adminTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setAdminTab(tab.id as any)}
+              className={`subtab-pill ${
+                isActive 
+                  ? 'bg-purple-900 text-white shadow-xs' 
+                  : 'bg-white text-secondaryText hover:text-purple-900 hover:bg-purple-50'
+              }`}
+            >
+              <Icon className="w-3.5 h-3.5 shrink-0" />
+              <span>{tab.label}</span>
+            </button>
+          );
+        })}
       </div>
 
       {/* TAB 1: OVERVIEW & ANALYTICS */}
       {adminTab === 'overview' && (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="p-4 rounded-2xl bg-white border border-softBorder">
-              <span className="text-xs text-secondaryText font-medium">নিবন্ধিত কৃষিজীবী ও ব্যবসায়ী</span>
-              <p className="text-2xl font-black text-forest-dark mt-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="card-premium p-4.5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-secondaryText font-medium">নিবন্ধিত কৃষিজীবী ও ব্যবসায়ী</span>
+                <Users className="w-4 h-4 text-purple-700/60" />
+              </div>
+              <p className="text-2xl font-black text-forest-dark mt-2">
                 ১২,৪৫০+
               </p>
               <p className="text-[11px] text-emerald-700 font-semibold mt-1">
@@ -145,39 +160,48 @@ export const AdminDashboard: React.FC = () => {
               </p>
             </div>
 
-            <div className="p-4 rounded-2xl bg-white border border-softBorder">
-              <span className="text-xs text-secondaryText font-medium">সক্রিয় মার্কেটপ্লেস বিজ্ঞাপন</span>
-              <p className="text-2xl font-black text-clay mt-1">
-                {toBengaliDigits(listings.length)} টি
+            <div className="card-premium p-4.5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-secondaryText font-medium">সক্রিয় মার্কেটপ্লেস বিজ্ঞাপন</span>
+                <ShoppingBag className="w-4 h-4 text-clay/70" />
+              </div>
+              <p className="text-2xl font-black text-clay mt-2">
+                {toBengaliDigits(listings.length)} <span className="text-sm font-semibold text-secondaryText">টি</span>
               </p>
               <p className="text-[11px] text-mutedText mt-1">
                 মোট মূল্যমান: ৳ {toBengaliDigits(listings.reduce((acc, l) => acc + (l.quantity * l.pricePerUnit), 0))}
               </p>
             </div>
 
-            <div className="p-4 rounded-2xl bg-white border border-softBorder">
-              <span className="text-xs text-secondaryText font-medium">সম্পন্ন অর্ডার ও জিএমভি (GMV)</span>
-              <p className="text-2xl font-black text-harvest-dark mt-1">
+            <div className="card-premium p-4.5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-secondaryText font-medium">সম্পন্ন অর্ডার ও মোট লেনদেন</span>
+                <TrendingUp className="w-4 h-4 text-forest/70" />
+              </div>
+              <p className="text-2xl font-black text-forest mt-2">
                 ৳ {toBengaliDigits(orders.reduce((acc, o) => acc + o.totalOrderValue, 0))}
               </p>
               <p className="text-[11px] text-emerald-700 font-semibold mt-1">
-                {orders.length} টি সফল ডিল
+                {toBengaliDigits(orders.length)} টি সফল ডিল সম্পন্ন
               </p>
             </div>
 
-            <div className="p-4 rounded-2xl bg-white border border-softBorder">
-              <span className="text-xs text-secondaryText font-medium">ভেরিফাইড বিশেষজ্ঞ নেটওয়ার্ক</span>
-              <p className="text-2xl font-black text-purple-900 mt-1">
-                {toBengaliDigits(verifiedExpertIds.length)} জন
+            <div className="card-premium p-4.5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-secondaryText font-medium">ভেরিফাইড বিশেষজ্ঞ নেটওয়ার্ক</span>
+                <ShieldCheck className="w-4 h-4 text-purple-700/60" />
+              </div>
+              <p className="text-2xl font-black text-purple-900 mt-2">
+                {toBengaliDigits(verifiedExpertIds.length)} <span className="text-sm font-semibold text-secondaryText">জন</span>
               </p>
               <p className="text-[11px] text-mutedText mt-1">
-                কৃষি, পশু ও মৎস্য বিশেষজ্ঞ
+                বিসিএস কৃষি, ভেট ও মৎস্য বিশেষজ্ঞ
               </p>
             </div>
           </div>
 
           {/* Audit History Log */}
-          <div className="bg-white p-5 rounded-2xl border border-softBorder shadow-2xs space-y-3">
+          <div className="card-premium p-5 space-y-3">
             <h3 className="text-sm font-bold text-forest-dark">সিস্টেম সিকিউরিটি ও অডিট ট্রেইল (Audit Trail)</h3>
             <div className="space-y-2 text-xs">
               {[
@@ -205,8 +229,8 @@ export const AdminDashboard: React.FC = () => {
 
       {/* TAB 2: EXPERT VERIFICATION */}
       {adminTab === 'experts' && (
-        <div className="bg-white p-5 rounded-2xl border border-softBorder shadow-2xs space-y-4">
-          <h3 className="text-sm font-bold text-forest-dark">কৃষি, পশু ও মৎস্য বিশেষজ্ঞ সনদপত্র যাচাই</h3>
+        <div className="card-premium p-5 space-y-4">
+          <h3 className="text-sm font-bold text-forest-dark">কৃষি, পশু ও মৎস্য বিশেষজ্ঞ সনদপত্র যাচাই ও অনুমোদন</h3>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead>
@@ -223,7 +247,7 @@ export const AdminDashboard: React.FC = () => {
                 {experts.map((exp) => {
                   const isVerified = verifiedExpertIds.includes(exp.id);
                   return (
-                    <tr key={exp.id} className="hover:bg-warmWhite">
+                    <tr key={exp.id} className="hover:bg-warmWhite transition">
                       <td className="py-2.5 px-3 font-bold text-forest-dark">{exp.nameBn}</td>
                       <td className="py-2.5 px-3 uppercase text-[10px] font-bold text-secondaryText">{exp.category}</td>
                       <td className="py-2.5 px-3 text-secondaryText">{exp.designationBn} ({exp.qualification})</td>
@@ -232,7 +256,7 @@ export const AdminDashboard: React.FC = () => {
                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
                           isVerified ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
                         }`}>
-                          {isVerified ? 'ভেরিফাইড' : 'অপেক্ষমাণ'}
+                          {isVerified ? '✓ ভেরিফাইড' : 'অপেক্ষমাণ'}
                         </span>
                       </td>
                       <td className="py-2.5 px-3 text-right">
@@ -242,7 +266,7 @@ export const AdminDashboard: React.FC = () => {
                             isVerified ? 'bg-red-50 text-status-error hover:bg-red-100' : 'bg-emerald-600 text-white hover:bg-emerald-700'
                           }`}
                         >
-                          {isVerified ? 'বাতিল' : 'অনুমোদন'}
+                          {isVerified ? 'বাতিল করুন' : 'অনুমোদন দিন'}
                         </button>
                       </td>
                     </tr>
@@ -256,13 +280,13 @@ export const AdminDashboard: React.FC = () => {
 
       {/* TAB 3: LISTINGS MODERATION */}
       {adminTab === 'listings' && (
-        <div className="bg-white p-5 rounded-2xl border border-softBorder shadow-2xs space-y-4">
+        <div className="card-premium p-5 space-y-4">
           <h3 className="text-sm font-bold text-forest-dark">মার্কেটপ্লেস লিস্টিং মডারেশন ও অনুমোদন</h3>
           <div className="space-y-3">
             {listings.map((l) => (
               <div key={l.id} className="p-4 rounded-xl border border-softBorder bg-warmWhite flex items-center justify-between text-xs">
                 <div className="flex items-center space-x-3">
-                  <img src={l.images[0]} alt={l.productName} className="w-12 h-12 rounded-xl object-cover border border-softBorder" />
+                  <img src={l.images[0]} alt={l.productName} className="w-12 h-12 rounded-xl object-cover border border-softBorder shrink-0" />
                   <div>
                     <h4 className="font-bold text-forest-dark">{l.productName}</h4>
                     <p className="text-secondaryText">বিক্রেতা: {l.sellerName} • {toBengaliDigits(l.quantity)} {l.unit} @ ৳{toBengaliDigits(l.pricePerUnit)}</p>
@@ -273,13 +297,14 @@ export const AdminDashboard: React.FC = () => {
                   <StatusBadge status={l.status} size="sm" />
                   <button
                     onClick={() => toggleListingStatus(l.id, l.status === 'published' ? 'paused' : 'published')}
-                    className="px-2.5 py-1 rounded-lg border border-softBorder text-xs font-bold hover:bg-rice"
+                    className="btn-secondary text-xs py-1 px-2.5"
                   >
                     {l.status === 'published' ? 'স্থগিত করুন' : 'অনুমোদন'}
                   </button>
                   <button
                     onClick={() => deleteListing(l.id)}
                     className="p-1.5 text-mutedText hover:text-status-error rounded-lg"
+                    title="লিস্টিং মুছে ফেলুন"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -292,10 +317,8 @@ export const AdminDashboard: React.FC = () => {
 
       {/* TAB 4: MARKET PRICE CONTROL */}
       {adminTab === 'prices' && (
-        <div className="bg-white p-5 rounded-2xl border border-softBorder shadow-2xs space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-forest-dark">আঞ্চলিক আড়তের পাইকারি ও খুচরা দর নির্ধারণ</h3>
-          </div>
+        <div className="card-premium p-5 space-y-4">
+          <h3 className="text-sm font-bold text-forest-dark">আঞ্চলিক আড়তের পাইকারি ও খুচরা দর নির্ধারণ</h3>
 
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
@@ -311,7 +334,7 @@ export const AdminDashboard: React.FC = () => {
               </thead>
               <tbody className="divide-y divide-softBorder">
                 {marketPrices.map((m) => (
-                  <tr key={m.id} className="hover:bg-warmWhite">
+                  <tr key={m.id} className="hover:bg-warmWhite transition">
                     <td className="py-2.5 px-3 font-bold text-forest-dark">{m.productBn}</td>
                     <td className="py-2.5 px-3">{m.marketLocation} ({m.district})</td>
                     <td className="py-2.5 px-3 font-black text-forest">৳ {toBengaliDigits(m.wholesalePrice)} / {m.unit}</td>
@@ -324,7 +347,7 @@ export const AdminDashboard: React.FC = () => {
                           setEditWholesale(m.wholesalePrice);
                           setEditRetail(m.retailPrice);
                         }}
-                        className="px-2.5 py-1 rounded-lg bg-forest/10 hover:bg-forest text-forest hover:text-white font-bold transition text-xs"
+                        className="btn-clay text-xs py-1 px-2.5"
                       >
                         মূল্য পরিবর্তন
                       </button>
@@ -339,7 +362,7 @@ export const AdminDashboard: React.FC = () => {
 
       {/* TAB 5: AI RESPONSE REPORTS & FEEDBACK */}
       {adminTab === 'ai_reports' && (
-        <div className="bg-white p-5 rounded-2xl border border-softBorder shadow-2xs space-y-4">
+        <div className="card-premium p-5 space-y-4">
           <h3 className="text-sm font-bold text-forest-dark">কৃষকের এআই পরামর্শ নিরীক্ষা ও ফিডব্যাক রিভিউ</h3>
           <div className="space-y-3">
             {aiReports.map((rep) => (
@@ -358,7 +381,7 @@ export const AdminDashboard: React.FC = () => {
                       setAiReports(prev => prev.map(r => r.id === rep.id ? { ...r, status: 'resolved' } : r));
                       showToast('রিপোর্ট সমাধান হিসেবে চিহ্নিত', 'success');
                     }}
-                    className="px-3 py-1 rounded-lg bg-emerald-600 text-white font-bold text-xs hover:bg-emerald-700 transition"
+                    className="btn-primary text-xs py-1 px-3"
                   >
                     ✓ সমাধান চিহ্নিত করুন
                   </button>
@@ -388,7 +411,7 @@ export const AdminDashboard: React.FC = () => {
                 required
                 value={editWholesale}
                 onChange={(e) => setEditWholesale(Number(e.target.value))}
-                className="w-full px-3 py-2 rounded-xl border border-softBorder bg-warmWhite outline-none font-bold text-forest"
+                className="input-field font-bold text-forest"
               />
             </div>
 
@@ -401,21 +424,21 @@ export const AdminDashboard: React.FC = () => {
                 required
                 value={editRetail}
                 onChange={(e) => setEditRetail(Number(e.target.value))}
-                className="w-full px-3 py-2 rounded-xl border border-softBorder bg-warmWhite outline-none font-semibold text-primaryText"
+                className="input-field font-semibold text-primaryText"
               />
             </div>
 
-            <div className="flex justify-end space-x-2 pt-3 border-t border-softBorder">
+            <div className="flex justify-end gap-2 pt-3 border-t border-softBorder">
               <button
                 type="button"
                 onClick={() => setEditingPriceItem(null)}
-                className="px-4 py-2 font-semibold text-secondaryText"
+                className="btn-secondary text-xs"
               >
                 বাতিল
               </button>
               <button
                 type="submit"
-                className="px-5 py-2 font-bold text-white bg-forest hover:bg-forest-dark rounded-xl transition shadow-sm"
+                className="btn-primary text-xs"
               >
                 হালনাগাদ সম্পন্ন করুন
               </button>

@@ -26,3 +26,4 @@ export const formatDate = (dateStr: string, lang: Language): string => {
   }
   return dateStr;
 };
+

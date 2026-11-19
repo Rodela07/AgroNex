@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import { 
   User, 
@@ -14,12 +15,16 @@ import {
   Save, 
   Trash2,
   Lock,
-  Globe
+  Globe,
+  Sparkles,
+  ArrowRight
 } from 'lucide-react';
 import { UserRole, SectorType } from '../../types';
 import { BANGLADESH_DISTRICTS } from '../../data/bangladeshGeo';
+import { toBengaliDigits } from '../../utils/formatters';
 
 export const ProfilePage: React.FC = () => {
+  const navigate = useNavigate();
   const { 
     language, 
     setLanguage, 
@@ -76,16 +81,16 @@ export const ProfilePage: React.FC = () => {
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
 
-      {/* Header */}
-      <div className="bg-white p-6 rounded-2xl border border-softBorder shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* Header Profile Card */}
+      <div className="card-premium p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center space-x-4">
           <img src={user.avatar} alt={user.name} className="w-16 h-16 rounded-2xl object-cover border border-softBorder shrink-0" />
           <div>
             <div className="flex items-center space-x-2">
               <h1 className="text-xl font-bold text-forest-dark">{user.name}</h1>
               {user.isVerified && (
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
-                  ✓ ভেরিফাইড
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                  ✓ ভেরিফাইড সদস্য
                 </span>
               )}
             </div>
@@ -99,24 +104,87 @@ export const ProfilePage: React.FC = () => {
           <span className="text-xs text-secondaryText">ভাষা:</span>
           <button
             onClick={() => setLanguage('bn')}
-            className={`px-3 py-1 text-xs font-bold rounded-lg ${language === 'bn' ? 'bg-forest text-white' : 'bg-rice text-secondaryText'}`}
+            className={`px-3 py-1.5 text-xs font-bold rounded-lg transition ${
+              language === 'bn' ? 'bg-forest text-white shadow-xs' : 'bg-rice text-secondaryText hover:text-primaryText'
+            }`}
           >
             বাংলা
           </button>
           <button
             onClick={() => setLanguage('en')}
-            className={`px-3 py-1 text-xs font-bold rounded-lg ${language === 'en' ? 'bg-forest text-white' : 'bg-rice text-secondaryText'}`}
+            className={`px-3 py-1.5 text-xs font-bold rounded-lg transition ${
+              language === 'en' ? 'bg-forest text-white shadow-xs' : 'bg-rice text-secondaryText hover:text-primaryText'
+            }`}
           >
             English
           </button>
         </div>
       </div>
 
+      {/* Asset Quick Summary Shortcuts */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <button 
+          onClick={() => navigate('/agriculture')}
+          className="card-premium p-3.5 text-center hover:border-forest transition group"
+        >
+          <div className="flex items-center justify-center space-x-1 text-forest mb-1">
+            <Sprout className="w-4 h-4" />
+            <span className="text-xs font-bold">জমি প্লট</span>
+          </div>
+          <span className="text-xl font-black text-forest-dark block">{toBengaliDigits(lands.length)} টি</span>
+          <span className="text-[10px] text-mutedText group-hover:text-forest transition flex items-center justify-center mt-1">
+            ম্যানেজ করুন <ArrowRight className="w-3 h-3 ml-0.5" />
+          </span>
+        </button>
+
+        <button 
+          onClick={() => navigate('/livestock')}
+          className="card-premium p-3.5 text-center hover:border-amber-900 transition group"
+        >
+          <div className="flex items-center justify-center space-x-1 text-amber-900 mb-1">
+            <Beef className="w-4 h-4" />
+            <span className="text-xs font-bold">খামার শেড</span>
+          </div>
+          <span className="text-xl font-black text-amber-900 block">{toBengaliDigits(livestockFarms.length)} টি</span>
+          <span className="text-[10px] text-mutedText group-hover:text-amber-900 transition flex items-center justify-center mt-1">
+            ম্যানেজ করুন <ArrowRight className="w-3 h-3 ml-0.5" />
+          </span>
+        </button>
+
+        <button 
+          onClick={() => navigate('/fisheries')}
+          className="card-premium p-3.5 text-center hover:border-river transition group"
+        >
+          <div className="flex items-center justify-center space-x-1 text-river mb-1">
+            <Fish className="w-4 h-4" />
+            <span className="text-xs font-bold">মৎস্য পুকুর</span>
+          </div>
+          <span className="text-xl font-black text-river block">{toBengaliDigits(ponds.length)} টি</span>
+          <span className="text-[10px] text-mutedText group-hover:text-river transition flex items-center justify-center mt-1">
+            ম্যানেজ করুন <ArrowRight className="w-3 h-3 ml-0.5" />
+          </span>
+        </button>
+
+        <button 
+          onClick={() => navigate('/marketplace')}
+          className="card-premium p-3.5 text-center hover:border-clay transition group"
+        >
+          <div className="flex items-center justify-center space-x-1 text-clay mb-1">
+            <ShoppingBag className="w-4 h-4" />
+            <span className="text-xs font-bold">বিজ্ঞাপিত পণ্য</span>
+          </div>
+          <span className="text-xl font-black text-clay block">{toBengaliDigits(listings.length)} টি</span>
+          <span className="text-[10px] text-mutedText group-hover:text-clay transition flex items-center justify-center mt-1">
+            মার্কেটপ্লেস <ArrowRight className="w-3 h-3 ml-0.5" />
+          </span>
+        </button>
+      </div>
+
       {/* Profile Form */}
       <form onSubmit={handleSaveProfile} className="space-y-6">
 
         {/* Personal & Farm Identity */}
-        <div className="bg-white p-5 rounded-2xl border border-softBorder shadow-2xs space-y-4">
+        <div className="card-premium p-5 space-y-4">
           <h3 className="text-sm font-bold text-forest-dark border-b border-softBorder pb-3">
             ব্যক্তিগত ও বাণিজ্যিক পরিচিতি
           </h3>
@@ -129,7 +197,7 @@ export const ProfilePage: React.FC = () => {
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-softBorder bg-warmWhite outline-none focus:border-forest"
+                className="input-field"
               />
             </div>
 
@@ -140,7 +208,7 @@ export const ProfilePage: React.FC = () => {
                 required
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-softBorder bg-warmWhite outline-none focus:border-forest"
+                className="input-field font-mono"
               />
             </div>
 
@@ -150,24 +218,24 @@ export const ProfilePage: React.FC = () => {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-softBorder bg-warmWhite outline-none focus:border-forest"
+                className="input-field"
               />
             </div>
 
             <div>
-              <label className="block font-bold text-primaryText mb-1">খামার বা ব্যবসার নাম</label>
+              <label className="block font-bold text-primaryText mb-1">খামার বা ট্রেডিং প্রতিষ্ঠানের নাম</label>
               <input
                 type="text"
                 value={businessName}
                 onChange={(e) => setBusinessName(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-softBorder bg-warmWhite outline-none focus:border-forest"
+                className="input-field"
               />
             </div>
           </div>
         </div>
 
         {/* Geographic Location */}
-        <div className="bg-white p-5 rounded-2xl border border-softBorder shadow-2xs space-y-4">
+        <div className="card-premium p-5 space-y-4">
           <h3 className="text-sm font-bold text-forest-dark border-b border-softBorder pb-3">
             ভৌগোলিক অবস্থান (Location)
           </h3>
@@ -182,7 +250,7 @@ export const ProfilePage: React.FC = () => {
                   const found = BANGLADESH_DISTRICTS.find(d => d.name === e.target.value);
                   if (found && found.upazilas.length > 0) setUpazila(found.upazilas[0]);
                 }}
-                className="w-full px-3 py-2 rounded-xl border border-softBorder bg-warmWhite outline-none"
+                className="input-field"
               >
                 {BANGLADESH_DISTRICTS.map(d => (
                   <option key={d.name} value={d.name}>{d.name} ({d.nameBn})</option>
@@ -195,7 +263,7 @@ export const ProfilePage: React.FC = () => {
               <select
                 value={upazila}
                 onChange={(e) => setUpazila(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-softBorder bg-warmWhite outline-none"
+                className="input-field"
               >
                 {selectedDistObj.upazilas.map(u => (
                   <option key={u} value={u}>{u}</option>
@@ -209,17 +277,19 @@ export const ProfilePage: React.FC = () => {
                 type="text"
                 value={village}
                 onChange={(e) => setVillage(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-softBorder bg-warmWhite outline-none"
+                className="input-field"
               />
             </div>
           </div>
         </div>
 
         {/* Multi-Role Capabilities */}
-        <div className="bg-white p-5 rounded-2xl border border-softBorder shadow-2xs space-y-4">
+        <div className="card-premium p-5 space-y-4">
           <div className="border-b border-softBorder pb-3">
             <h3 className="text-sm font-bold text-forest-dark">বহুবিধ ভূমিকা ও সক্ষমতা (Multi-Role Capabilities)</h3>
-            <p className="text-xs text-secondaryText">একজন ব্যবহারকারী কৃষক ও বিক্রেতা উভয় সক্ষমতায় কাজ করতে পারেন।</p>
+            <p className="text-xs text-secondaryText leading-relaxed">
+              একজন ব্যবহারকারী কৃষক এবং বিক্রেতা উভয় সক্ষমতায় একই অ্যাকাউন্টে কাজ করতে পারেন।
+            </p>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -236,7 +306,7 @@ export const ProfilePage: React.FC = () => {
                 <label 
                   key={r.id} 
                   className={`p-3 rounded-xl border text-xs cursor-pointer flex items-center space-x-2 transition ${
-                    isChecked ? 'bg-forest-50 border-forest text-forest-dark font-bold' : 'bg-warmWhite border-softBorder text-primaryText'
+                    isChecked ? 'bg-forest-50 border-forest text-forest-dark font-bold shadow-2xs' : 'bg-warmWhite border-softBorder text-primaryText hover:bg-rice'
                   }`}
                 >
                   <input
@@ -252,30 +322,10 @@ export const ProfilePage: React.FC = () => {
           </div>
         </div>
 
-        {/* Asset Summary */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
-          <div className="p-3 bg-white rounded-xl border border-softBorder">
-            <span className="text-[10px] text-mutedText block">জমি প্লট</span>
-            <span className="text-lg font-bold text-forest">{lands.length} টি</span>
-          </div>
-          <div className="p-3 bg-white rounded-xl border border-softBorder">
-            <span className="text-[10px] text-mutedText block">খামার শেড</span>
-            <span className="text-lg font-bold text-amber-900">{livestockFarms.length} টি</span>
-          </div>
-          <div className="p-3 bg-white rounded-xl border border-softBorder">
-            <span className="text-[10px] text-mutedText block">মৎস্য পুকুর</span>
-            <span className="text-lg font-bold text-river">{ponds.length} টি</span>
-          </div>
-          <div className="p-3 bg-white rounded-xl border border-softBorder">
-            <span className="text-[10px] text-mutedText block">বিজ্ঞাপিত পণ্য</span>
-            <span className="text-lg font-bold text-clay">{listings.length} টি</span>
-          </div>
-        </div>
-
         <div className="flex justify-end pt-2">
           <button
             type="submit"
-            className="px-6 py-2.5 rounded-xl bg-forest hover:bg-forest-dark text-white font-bold text-xs shadow-sm transition flex items-center space-x-1.5"
+            className="btn-primary flex items-center space-x-2 text-xs py-2.5 px-6 shadow-sm"
           >
             <Save className="w-4 h-4" />
             <span>প্রোফাইল পরিবর্তন সংরক্ষণ করুন</span>

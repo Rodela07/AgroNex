@@ -26,6 +26,7 @@ export const App: React.FC = () => {
   const [currentSubTab, setCurrentSubTab] = useState<string>('overview');
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
   const [showOnboarding, setShowOnboarding] = useState<boolean>(false);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState<boolean>(false);
 
   const handleNavigate = (tab: string, subtab?: string) => {
     setCurrentTab(tab);
@@ -34,11 +35,12 @@ export const App: React.FC = () => {
     } else {
       setCurrentSubTab('overview');
     }
+    setMobileDrawerOpen(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
-    <div className="min-h-screen bg-rice flex flex-col font-sans selection:bg-forest/20 selection:text-forest-dark">
+    <div className="min-h-screen bg-rice flex flex-col font-sans selection:bg-forest/20 selection:text-forest-dark antialiased">
       {/* Offline Status Bar Banner (if toggled) */}
       {isOffline && (
         <div className="bg-amber-600 text-white text-xs font-semibold py-1.5 px-4 text-center">
@@ -49,7 +51,7 @@ export const App: React.FC = () => {
       )}
 
       {/* Top Navbar */}
-      <Navbar onOpenMobileMenu={() => {}} />
+      <Navbar onOpenMobileMenu={() => setMobileDrawerOpen(true)} />
 
       {/* Main Body with Sidebar + Main Content */}
       <div className="flex-1 flex overflow-hidden">
@@ -80,6 +82,8 @@ export const App: React.FC = () => {
       <MobileNav
         currentTab={currentTab}
         onSelectTab={(tab) => handleNavigate(tab)}
+        isDrawerOpen={mobileDrawerOpen}
+        onCloseDrawer={() => setMobileDrawerOpen(false)}
       />
 
       {/* Floating System Modals */}

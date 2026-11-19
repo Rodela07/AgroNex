@@ -438,3 +438,4 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({ onNavigate }) => {
     </div>
   );
 };
+

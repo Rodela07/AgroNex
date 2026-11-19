@@ -24,6 +24,43 @@ body {
   background-color: #F7F5EC;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  line-height: 1.6;
+}
+
+/* Typography refinements for Bengali script */
+h1, h2, h3, h4, h5, h6 {
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+}
+
+/* Consistent inputs and interactive controls */
+@layer components {
+  .input-field {
+    @apply w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-xl border border-softBorder bg-warmWhite text-primaryText transition-all duration-150 outline-none;
+  }
+  .input-field:focus {
+    @apply border-forest ring-2 ring-forest/15 bg-white;
+  }
+  
+  .btn-primary {
+    @apply inline-flex items-center justify-center space-x-2 px-4 py-2.5 rounded-xl bg-forest hover:bg-forest-dark text-white font-semibold text-xs sm:text-sm shadow-sm transition duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  
+  .btn-secondary {
+    @apply inline-flex items-center justify-center space-x-2 px-4 py-2.5 rounded-xl bg-rice hover:bg-white text-forest-dark font-semibold text-xs sm:text-sm border border-softBorder transition duration-150;
+  }
+
+  .btn-clay {
+    @apply inline-flex items-center justify-center space-x-2 px-4 py-2.5 rounded-xl bg-clay hover:bg-clay-dark text-white font-semibold text-xs sm:text-sm shadow-sm transition duration-150;
+  }
+
+  .card-premium {
+    @apply bg-white rounded-2xl border border-softBorder shadow-sm hover:shadow transition duration-150;
+  }
+
+  .subtab-pill {
+    @apply px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition duration-150 whitespace-nowrap flex items-center space-x-2;
+  }
 }
 
 /* Custom Scrollbars */
@@ -55,5 +92,6 @@ body {
     left: 0;
     top: 0;
     width: 100%;
+    background: white;
   }
 }

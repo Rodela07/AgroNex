@@ -399,3 +399,4 @@ export interface CalendarReminder {
   isCompleted: boolean;
   entityName?: string; // Land name, farm name, or pond name
 }
+

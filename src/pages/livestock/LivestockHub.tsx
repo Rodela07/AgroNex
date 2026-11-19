@@ -18,12 +18,19 @@ import {
   Mic, 
   ShieldAlert,
   ChevronRight,
-  Info
+  Info,
+  BarChart2,
+  Layers,
+  Activity,
+  Sparkles,
+  HelpCircle,
+  FileText
 } from 'lucide-react';
 import { LivestockFarm, AnimalRecord, VaccinationRecord, FeedingLog, LivestockType } from '../../types';
 import { Modal } from '../../components/common/Modal';
 import { ConfirmDialog } from '../../components/common/ConfirmDialog';
 import { StatusBadge } from '../../components/common/StatusBadge';
+import { EmptyState } from '../../components/common/EmptyState';
 import { formatCurrency, formatNumber, toBengaliDigits } from '../../utils/formatters';
 
 export const LivestockHub: React.FC<{ initialSubTab?: string }> = ({ initialSubTab = 'overview' }) => {
@@ -113,6 +120,7 @@ export const LivestockHub: React.FC<{ initialSubTab?: string }> = ({ initialSubT
       setupCostEstimate: Math.round(Number(budget) * 0.6),
       monthlyOperatingCost: Math.round(Number(budget) * 0.12)
     });
+    setFarmName('');
     setShowFarmModal(false);
   };
 
@@ -129,6 +137,7 @@ export const LivestockHub: React.FC<{ initialSubTab?: string }> = ({ initialSubT
       weightKg: Number(animalWeight),
       healthStatus: animalHealth
     });
+    setTagNumber('');
     setShowAnimalModal(false);
   };
 
@@ -185,96 +194,114 @@ export const LivestockHub: React.FC<{ initialSubTab?: string }> = ({ initialSubT
     }, 600);
   };
 
+  const tabs = [
+    { id: 'overview', icon: BarChart2, labelBn: 'একনজরে', labelEn: 'Overview' },
+    { id: 'farms', icon: Layers, labelBn: 'আমার খামার', labelEn: 'Farms' },
+    { id: 'animals', icon: HeartPulse, labelBn: 'পশু ব্যবস্থাপনা', labelEn: 'Animals' },
+    { id: 'breeds', icon: BookOpen, labelBn: 'জাত নির্বাচন গাইড', labelEn: 'Breeds' },
+    { id: 'nutrition', icon: Calculator, labelBn: 'পুষ্টি ও FCR ক্যালকুলেটর', labelEn: 'FCR' },
+    { id: 'vaccines', icon: Syringe, labelBn: 'টিকা ও কৃমিনাশক', labelEn: 'Vaccines' },
+    { id: 'aivet', icon: Bot, labelBn: 'এআই ভেট ডাক্তার', labelEn: 'AI Vet' },
+    { id: 'emergency', icon: ShieldAlert, labelBn: 'জরুরি চিকিৎসক', labelEn: 'Emergency' }
+  ];
+
   return (
     <div className="space-y-6">
 
-      {/* Header */}
+      {/* Header Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-softBorder shadow-2xs">
-        <div className="flex items-center space-x-2">
-          <span className="p-2 rounded-xl bg-amber-50 text-amber-900">
-            <Beef className="w-5 h-5" />
+        <div className="flex items-center space-x-3">
+          <span className="p-2.5 rounded-xl bg-amber-50 text-amber-900 border border-amber-200/60 shadow-2xs">
+            <Beef className="w-5 h-5 text-amber-900" />
           </span>
           <div>
             <h1 className="text-xl font-bold text-forest-dark">
-              {language === 'bn' ? 'পশু ও খামারি মডিউল (Veterinary & Livestock)' : 'Livestock & Veterinary Hub'}
+              {language === 'bn' ? 'প্রাণিসম্পদ ও খামারি ব্যবস্থাপনা (Livestock & Vet Hub)' : 'Livestock & Veterinary Hub'}
             </h1>
-            <p className="text-xs text-secondaryText">
-              {language === 'bn' ? 'গবাদিপশু খামার পরিকল্পনা, টিকা শিডিউল, FCR ক্যালকুলেটর ও এআই ভেট ডাক্তার' : 'Cattle & goat farm planning, vaccination schedules, FCR calculator and AI vet'}
+            <p className="text-xs text-secondaryText leading-relaxed">
+              {language === 'bn' 
+                ? 'গবাদিপশু খামার পরিকল্পনা, একক ট্যাগিং, টিকা শিডিউল, FCR ক্যালকুলেটর ও এআই ভেট ডাক্তার' 
+                : 'Cattle & goat farm planning, RFID tagging, vaccination schedules, FCR calculator and AI vet'}
             </p>
           </div>
         </div>
 
-        <div className="flex space-x-2">
+        <div className="flex items-center gap-2">
           <button
             onClick={() => setShowAnimalModal(true)}
-            className="inline-flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-rice text-primaryText hover:bg-forest/10 border border-softBorder text-xs font-bold transition"
+            className="btn-secondary text-xs"
           >
             <Plus className="w-3.5 h-3.5" />
-            <span>পশু নিবন্ধন</span>
+            <span>{language === 'bn' ? 'পশু নিবন্ধন' : 'Register Animal'}</span>
           </button>
           <button
             onClick={() => setShowFarmModal(true)}
-            className="inline-flex items-center space-x-1.5 px-4 py-2 rounded-xl bg-forest hover:bg-forest-dark text-white text-xs font-bold shadow-sm transition"
+            className="btn-clay text-xs"
           >
             <Plus className="w-3.5 h-3.5" />
-            <span>খামার যোগ করুন</span>
+            <span>{language === 'bn' ? 'নতুন খামার যোগ' : 'Add Farm'}</span>
           </button>
         </div>
       </div>
 
       {/* Sub-Navigation Tabs */}
-      <div className="flex items-center space-x-1 border-b border-softBorder overflow-x-auto pb-1 text-xs font-bold">
-        {[
-          { id: 'overview', labelBn: 'একনজরে (Overview)' },
-          { id: 'farms', labelBn: 'আমার খামার (Farms)' },
-          { id: 'animals', labelBn: 'পশু ব্যবস্থাপনা (Animals)' },
-          { id: 'breeds', labelBn: 'জাত নির্বাচন গাইড (Breeds)' },
-          { id: 'nutrition', labelBn: 'পুষ্টি ও FCR ক্যালকুলেটর (FCR)' },
-          { id: 'vaccines', labelBn: 'টিকা ও কৃমিনাশক (Vaccines)' },
-          { id: 'aivet', labelBn: 'এআই ভেট ডাক্তার (AI Vet Assistant)' },
-          { id: 'emergency', labelBn: 'জরুরি চিকিৎসক (Emergency Vet)' }
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`px-4 py-2.5 rounded-xl whitespace-nowrap transition ${
-              activeTab === tab.id 
-                ? 'bg-amber-900 text-white shadow-2xs' 
-                : 'text-secondaryText hover:text-amber-900 hover:bg-rice'
-            }`}
-          >
-            {tab.labelBn}
-          </button>
-        ))}
+      <div className="flex items-center gap-2 border-b border-softBorder overflow-x-auto pb-2 scrollbar-none">
+        {tabs.map((tab) => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`subtab-pill ${
+                isActive 
+                  ? 'bg-amber-900 text-white shadow-xs' 
+                  : 'bg-white text-secondaryText hover:text-amber-900 hover:bg-amber-50/50'
+              }`}
+            >
+              <Icon className="w-3.5 h-3.5 shrink-0" />
+              <span>{language === 'bn' ? tab.labelBn : tab.labelEn}</span>
+            </button>
+          );
+        })}
       </div>
 
       {/* TAB 1: OVERVIEW */}
       {activeTab === 'overview' && (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="p-4 rounded-2xl bg-white border border-softBorder">
-              <span className="text-xs text-secondaryText font-medium">নিবন্ধিত খামার শেড</span>
-              <p className="text-2xl font-black text-amber-900 mt-1">
-                {toBengaliDigits(livestockFarms.length)} টি খামার
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="p-4 rounded-2xl bg-white border border-softBorder shadow-2xs">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-secondaryText font-medium">নিবন্ধিত খামার শেড</span>
+                <Beef className="w-4 h-4 text-amber-900/60" />
+              </div>
+              <p className="text-2xl font-black text-amber-900 mt-2">
+                {toBengaliDigits(livestockFarms.length)} <span className="text-sm font-semibold text-secondaryText">টি</span>
               </p>
               <p className="text-[11px] text-mutedText mt-1">
-                ধারণক্ষমতা: {livestockFarms.reduce((acc, f) => acc + f.capacity, 0)} টি পশু
+                ধারণক্ষমতা: {toBengaliDigits(livestockFarms.reduce((acc, f) => acc + f.capacity, 0))} টি পশু
               </p>
             </div>
 
-            <div className="p-4 rounded-2xl bg-white border border-softBorder">
-              <span className="text-xs text-secondaryText font-medium">মোট পশু সংখ্যা</span>
-              <p className="text-2xl font-black text-forest-dark mt-1">
-                {toBengaliDigits(animals.length)} টি
+            <div className="p-4 rounded-2xl bg-white border border-softBorder shadow-2xs">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-secondaryText font-medium">মোট পশু সংখ্যা</span>
+                <HeartPulse className="w-4 h-4 text-forest/60" />
+              </div>
+              <p className="text-2xl font-black text-forest-dark mt-2">
+                {toBengaliDigits(animals.length)} <span className="text-sm font-semibold text-secondaryText">টি</span>
               </p>
               <p className="text-[11px] text-emerald-700 font-semibold mt-1">
-                সুস্থ: {animals.filter(a => a.healthStatus === 'healthy').length} • চিকিৎসাধীন: {animals.filter(a => a.healthStatus === 'treatment').length}
+                সুস্থ: {toBengaliDigits(animals.filter(a => a.healthStatus === 'healthy').length)} • চিকিৎসাধীন: {toBengaliDigits(animals.filter(a => a.healthStatus === 'treatment').length)}
               </p>
             </div>
 
-            <div className="p-4 rounded-2xl bg-white border border-softBorder">
-              <span className="text-xs text-secondaryText font-medium">আসন্ন টিকার তারিখ</span>
-              <p className="text-sm font-bold text-status-warning mt-1">
+            <div className="p-4 rounded-2xl bg-white border border-softBorder shadow-2xs">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-secondaryText font-medium">আসন্ন টিকার তারিখ</span>
+                <Syringe className="w-4 h-4 text-status-warning/60" />
+              </div>
+              <p className="text-sm font-bold text-status-warning mt-2">
                 ১০ ডিসেম্বর ২০২৬
               </p>
               <p className="text-[11px] text-mutedText mt-1">
@@ -282,9 +309,12 @@ export const LivestockHub: React.FC<{ initialSubTab?: string }> = ({ initialSubT
               </p>
             </div>
 
-            <div className="p-4 rounded-2xl bg-white border border-softBorder">
-              <span className="text-xs text-secondaryText font-medium">গড় খাদ্য রূপান্তর হার (FCR)</span>
-              <p className="text-2xl font-black text-forest mt-1">
+            <div className="p-4 rounded-2xl bg-white border border-softBorder shadow-2xs">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-secondaryText font-medium">গড় খাদ্য রূপান্তর হার (FCR)</span>
+                <Activity className="w-4 h-4 text-forest/60" />
+              </div>
+              <p className="text-2xl font-black text-forest mt-2">
                 {toBengaliDigits(calculatedFCR || 6.0)}
               </p>
               <p className="text-[11px] text-emerald-700 font-semibold mt-1">
@@ -294,42 +324,55 @@ export const LivestockHub: React.FC<{ initialSubTab?: string }> = ({ initialSubT
           </div>
 
           {/* Animals Quick Preview */}
-          <div className="bg-white p-5 rounded-2xl border border-softBorder">
+          <div className="bg-white p-5 rounded-2xl border border-softBorder shadow-2xs">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-bold text-forest-dark">পশু স্বাস্থ্য ও ট্যাগ রেকর্ড</h3>
+              <div className="flex items-center space-x-2">
+                <HeartPulse className="w-4 h-4 text-amber-900" />
+                <h3 className="text-sm font-bold text-forest-dark">পশু স্বাস্থ্য ও ট্যাগ রেকর্ড</h3>
+              </div>
               <button onClick={() => setActiveTab('animals')} className="text-xs font-bold text-forest hover:underline">
-                সবগুলো দেখুন ({animals.length})
+                সবগুলো দেখুন ({toBengaliDigits(animals.length)})
               </button>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead>
-                  <tr className="bg-rice text-secondaryText border-y border-softBorder">
-                    <th className="py-2.5 px-3">ট্যাগ নম্বর</th>
-                    <th className="py-2.5 px-3">জাত (Breed)</th>
-                    <th className="py-2.5 px-3">বয়স ও লিঙ্গ</th>
-                    <th className="py-2.5 px-3">ওজন</th>
-                    <th className="py-2.5 px-3">স্বাস্থ্য স্ট্যাটাস</th>
-                    <th className="py-2.5 px-3">বিশেষ তথ্য</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-softBorder">
-                  {animals.map((anm) => (
-                    <tr key={anm.id} className="hover:bg-warmWhite">
-                      <td className="py-2.5 px-3 font-mono font-bold text-forest-dark">{anm.tagNumber}</td>
-                      <td className="py-2.5 px-3 font-semibold">{anm.breed}</td>
-                      <td className="py-2.5 px-3 text-secondaryText">{toBengaliDigits(anm.ageMonths)} মাস • {anm.gender}</td>
-                      <td className="py-2.5 px-3 font-bold text-primaryText">{toBengaliDigits(anm.weightKg)} কেজি</td>
-                      <td className="py-2.5 px-3">
-                        <StatusBadge status={anm.healthStatus} size="sm" />
-                      </td>
-                      <td className="py-2.5 px-3 text-[11px] text-mutedText">{anm.notes || 'স্বাভাবিক'}</td>
+            {animals.length === 0 ? (
+              <EmptyState
+                icon={HeartPulse}
+                title="কোনো পশুর রেকর্ড নেই"
+                description="আপনার খামারের প্রতিটি পশুর ট্যাগ আইডি ও স্বাস্থ্য ট্র্যাক করতে প্রথম পশু নিবন্ধন করুন।"
+                actionLabel="+ পশু নিবন্ধন করুন"
+                onAction={() => setShowAnimalModal(true)}
+              />
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr className="bg-rice text-secondaryText border-y border-softBorder">
+                      <th className="py-2.5 px-3">ট্যাগ নম্বর</th>
+                      <th className="py-2.5 px-3">জাত (Breed)</th>
+                      <th className="py-2.5 px-3">বয়স ও লিঙ্গ</th>
+                      <th className="py-2.5 px-3">ওজন</th>
+                      <th className="py-2.5 px-3">স্বাস্থ্য স্ট্যাটাস</th>
+                      <th className="py-2.5 px-3">বিশেষ তথ্য</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="divide-y divide-softBorder">
+                    {animals.map((anm) => (
+                      <tr key={anm.id} className="hover:bg-warmWhite transition">
+                        <td className="py-2.5 px-3 font-mono font-bold text-forest-dark">{anm.tagNumber}</td>
+                        <td className="py-2.5 px-3 font-semibold">{anm.breed}</td>
+                        <td className="py-2.5 px-3 text-secondaryText">{toBengaliDigits(anm.ageMonths)} মাস • {anm.gender === 'Female' ? 'মাদী' : 'নর'}</td>
+                        <td className="py-2.5 px-3 font-bold text-primaryText">{toBengaliDigits(anm.weightKg)} কেজি</td>
+                        <td className="py-2.5 px-3">
+                          <StatusBadge status={anm.healthStatus} size="sm" />
+                        </td>
+                        <td className="py-2.5 px-3 text-[11px] text-mutedText">{anm.notes || 'স্বাভাবিক'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -337,61 +380,86 @@ export const LivestockHub: React.FC<{ initialSubTab?: string }> = ({ initialSubT
       {/* TAB 2: MY FARMS */}
       {activeTab === 'farms' && (
         <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {livestockFarms.map((farm) => (
-              <div key={farm.id} className="p-5 rounded-2xl bg-white border border-softBorder shadow-2xs flex flex-col justify-between">
-                <div>
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-900 uppercase">
-                        {farm.livestockType}
-                      </span>
-                      <h4 className="text-base font-bold text-forest-dark mt-1">{farm.name}</h4>
-                      <p className="text-xs text-secondaryText">{farm.purpose} • {farm.upazila}, {farm.district}</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-bold text-forest-dark">নিবন্ধিত খামার শেড তালিকা</h3>
+              <p className="text-xs text-secondaryText">পশুর আবাসন ধারণক্ষমতা ও উৎপাদন খরচ ট্র্যাকিং</p>
+            </div>
+            <button
+              onClick={() => setShowFarmModal(true)}
+              className="btn-clay text-xs"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>নতুন খামার যোগ</span>
+            </button>
+          </div>
+
+          {livestockFarms.length === 0 ? (
+            <EmptyState
+              icon={Beef}
+              title="কোনো খামার শেড নিবন্ধিত নেই"
+              description="ডেইরি, মোটাতাজাকরণ বা ছাগল খামার শেড যোগ করে সঠিক আয়তন ও ধারণক্ষমতা পরিকল্পনা করুন।"
+              actionLabel="+ নতুন খামার যোগ করুন"
+              onAction={() => setShowFarmModal(true)}
+            />
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {livestockFarms.map((farm) => (
+                <div key={farm.id} className="card-premium p-5 flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-900 border border-amber-200/60 uppercase">
+                          {farm.livestockType}
+                        </span>
+                        <h4 className="text-base font-bold text-forest-dark mt-1.5">{farm.name}</h4>
+                        <p className="text-xs text-secondaryText">{farm.purpose} • {farm.upazila}, {farm.district}</p>
+                      </div>
+                      <button
+                        onClick={() => setDeleteTargetFarmId(farm.id)}
+                        className="p-1.5 text-secondaryText hover:text-status-error hover:bg-red-50 rounded-lg transition"
+                        title="খামার মুছে ফেলুন"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
+
+                    <div className="grid grid-cols-2 gap-2 mt-4 pt-3 border-t border-softBorder text-xs">
+                      <div className="p-2.5 rounded-xl bg-rice">
+                        <span className="text-[10px] text-secondaryText block">বর্তমান পশু</span>
+                        <span className="font-bold text-primaryText text-sm">{toBengaliDigits(farm.animalCount)} টি</span>
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-rice">
+                        <span className="text-[10px] text-secondaryText block">শেড ধারণক্ষমতা</span>
+                        <span className="font-bold text-primaryText text-sm">{toBengaliDigits(farm.capacity)} টি</span>
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-rice">
+                        <span className="text-[10px] text-secondaryText block">শেডের জায়গা</span>
+                        <span className="font-bold text-primaryText">{toBengaliDigits(farm.availableSpaceSqFt)} বর্গফুট</span>
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-rice">
+                        <span className="text-[10px] text-secondaryText block">মাসিক পরিচালন ব্যয়</span>
+                        <span className="font-bold text-primaryText">{toBengaliDigits(farm.monthlyOperatingCost)} ৳</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 pt-3 border-t border-softBorder flex items-center justify-between">
+                    <span className="text-[11px] text-mutedText">আপডেট: {farm.lastUpdated}</span>
                     <button
-                      onClick={() => setDeleteTargetFarmId(farm.id)}
-                      className="p-1.5 text-secondaryText hover:text-status-error hover:bg-red-50 rounded-lg transition"
+                      onClick={() => {
+                        setSelectedFarmId(farm.id);
+                        setShowAnimalModal(true);
+                      }}
+                      className="text-xs font-bold text-amber-900 hover:underline"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      + নতুন পশু রেজিস্টার
                     </button>
                   </div>
-
-                  <div className="grid grid-cols-2 gap-2 mt-4 pt-3 border-t border-softBorder text-xs">
-                    <div className="p-2 rounded-xl bg-rice">
-                      <span className="text-[10px] text-secondaryText block">বর্তমান পশু</span>
-                      <span className="font-bold text-primaryText">{toBengaliDigits(farm.animalCount)} টি</span>
-                    </div>
-                    <div className="p-2 rounded-xl bg-rice">
-                      <span className="text-[10px] text-secondaryText block">শেড ধারণক্ষমতা</span>
-                      <span className="font-bold text-primaryText">{toBengaliDigits(farm.capacity)} টি</span>
-                    </div>
-                    <div className="p-2 rounded-xl bg-rice">
-                      <span className="text-[10px] text-secondaryText block">উপলব্ধ জায়গা</span>
-                      <span className="font-bold text-primaryText">{toBengaliDigits(farm.availableSpaceSqFt)} বর্গফুট</span>
-                    </div>
-                    <div className="p-2 rounded-xl bg-rice">
-                      <span className="text-[10px] text-secondaryText block">মাসিক আনুমানিক ব্যয়</span>
-                      <span className="font-bold text-primaryText">{toBengaliDigits(farm.monthlyOperatingCost)} ৳</span>
-                    </div>
-                  </div>
                 </div>
-
-                <div className="mt-4 pt-3 border-t border-softBorder flex items-center justify-between">
-                  <span className="text-[11px] text-mutedText">আপডেট: {farm.lastUpdated}</span>
-                  <button
-                    onClick={() => {
-                      setSelectedFarmId(farm.id);
-                      setShowAnimalModal(true);
-                    }}
-                    className="text-xs font-bold text-amber-900 hover:underline"
-                  >
-                    + নতুন পশু রেজিস্টার
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -399,82 +467,98 @@ export const LivestockHub: React.FC<{ initialSubTab?: string }> = ({ initialSubT
       {activeTab === 'animals' && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-forest-dark">সকল রেজিস্টার্ড পশুর প্রোফাইল</h3>
+            <div>
+              <h3 className="text-sm font-bold text-forest-dark">পশুর একক ট্যাগ আইডি ও স্বাস্থ্য প্রোফাইল</h3>
+              <p className="text-xs text-secondaryText">প্রতিটি পশুর স্বতন্ত্র রেকর্ড, শারীরিক ওজন ও স্বাস্থ্য ইতিহাস</p>
+            </div>
             <button
               onClick={() => setShowAnimalModal(true)}
-              className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-amber-900 text-white text-xs font-bold hover:bg-amber-800 transition"
+              className="btn-primary text-xs"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>পশু যুক্ত করুন</span>
             </button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {animals.map((anm) => (
-              <div key={anm.id} className="p-4 rounded-2xl bg-white border border-softBorder shadow-2xs space-y-3">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <span className="text-xs font-mono font-black text-forest-dark bg-rice px-2 py-0.5 rounded-md">
-                      {anm.tagNumber}
-                    </span>
-                    <h4 className="text-xs font-bold text-primaryText mt-1.5">{anm.breed}</h4>
+          {animals.length === 0 ? (
+            <EmptyState
+              icon={HeartPulse}
+              title="কোনো পশুর প্রোফাইল নেই"
+              description="খামারের প্রতিটি পশুর ট্যাগ নম্বর, জাত, বয়স, ওজন ও স্বাস্থ্য নিয়মিত ট্র্যাক করতে পশু যোগ করুন।"
+              actionLabel="+ পশু নিবন্ধন করুন"
+              onAction={() => setShowAnimalModal(true)}
+            />
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {animals.map((anm) => (
+                <div key={anm.id} className="card-premium p-4.5 space-y-3">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <span className="text-xs font-mono font-black text-forest-dark bg-rice px-2 py-0.5 rounded-md border border-softBorder">
+                        {anm.tagNumber}
+                      </span>
+                      <h4 className="text-xs font-bold text-primaryText mt-2">{anm.breed}</h4>
+                    </div>
+                    <StatusBadge status={anm.healthStatus} size="sm" />
                   </div>
-                  <StatusBadge status={anm.healthStatus} size="sm" />
-                </div>
 
-                <div className="space-y-1 text-xs text-secondaryText">
-                  <div className="flex justify-between">
-                    <span>বয়স:</span>
-                    <span className="font-semibold text-primaryText">{toBengaliDigits(anm.ageMonths)} মাস</span>
+                  <div className="space-y-1.5 text-xs text-secondaryText">
+                    <div className="flex justify-between py-1 border-b border-softBorder/60">
+                      <span>বয়স:</span>
+                      <span className="font-semibold text-primaryText">{toBengaliDigits(anm.ageMonths)} মাস</span>
+                    </div>
+                    <div className="flex justify-between py-1 border-b border-softBorder/60">
+                      <span>ওজন:</span>
+                      <span className="font-bold text-primaryText">{toBengaliDigits(anm.weightKg)} কেজি</span>
+                    </div>
+                    <div className="flex justify-between py-1">
+                      <span>লিঙ্গ:</span>
+                      <span className="font-semibold text-primaryText">{anm.gender === 'Female' ? 'মাদী / গাভী' : 'নর / ষাঁড়'}</span>
+                    </div>
+                    {anm.notes && (
+                      <p className="p-2.5 rounded-xl bg-rice/70 text-[11px] text-primaryText leading-relaxed">
+                        {anm.notes}
+                      </p>
+                    )}
                   </div>
-                  <div className="flex justify-between">
-                    <span>ওজন:</span>
-                    <span className="font-bold text-primaryText">{toBengaliDigits(anm.weightKg)} কেজি</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>লিঙ্গ:</span>
-                    <span className="font-semibold text-primaryText">{anm.gender === 'Female' ? 'মাদী / গাভী' : 'নর / ষাঁড়'}</span>
-                  </div>
-                  {anm.notes && (
-                    <p className="p-2 rounded-lg bg-rice/70 text-[11px] text-primaryText mt-2">
-                      {anm.notes}
-                    </p>
-                  )}
-                </div>
 
-                <div className="pt-2 border-t border-softBorder flex items-center justify-between">
-                  <button
-                    onClick={() => {
-                      setVacTag(anm.tagNumber);
-                      setShowVacModal(true);
-                    }}
-                    className="text-[11px] font-bold text-forest hover:underline"
-                  >
-                    + টিকা শিডিউল
-                  </button>
-                  <button
-                    onClick={() => deleteAnimal(anm.id)}
-                    className="text-mutedText hover:text-status-error"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
+                  <div className="pt-2 border-t border-softBorder flex items-center justify-between">
+                    <button
+                      onClick={() => {
+                        setVacTag(anm.tagNumber);
+                        setShowVacModal(true);
+                      }}
+                      className="text-[11px] font-bold text-forest hover:underline"
+                    >
+                      + টিকা শিডিউল
+                    </button>
+                    <button
+                      onClick={() => deleteAnimal(anm.id)}
+                      className="text-mutedText hover:text-status-error p-1 rounded transition"
+                      title="পশুর রেকর্ড মুছুন"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
       {/* TAB 4: BREED GUIDE & COMPARISON */}
       {activeTab === 'breeds' && (
         <div className="space-y-6">
-          <div className="bg-white p-5 rounded-2xl border border-softBorder shadow-2xs">
-            <h3 className="text-sm font-bold text-forest-dark mb-1">
-              উন্নত জাত নির্বাচন নির্দেশিকা ও তুলনা
-            </h3>
-            <p className="text-xs text-secondaryText mb-5">
-              বাংলাদেশের আবহাওয়ায় রোগ প্রতিরোধ ক্ষমতা, উৎপাদনশীলতা ও ব্যবস্থাপনা সুবিধার তুলনামূলক বিশ্লেষণ।
-            </p>
+          <div className="card-premium p-5 space-y-4">
+            <div>
+              <h3 className="text-sm font-bold text-forest-dark mb-1">
+                উন্নত জাত নির্বাচন নির্দেশিকা ও আবহাওয়া সহনশীলতা
+              </h3>
+              <p className="text-xs text-secondaryText leading-relaxed">
+                বাংলাদেশের জলবায়ুতে রোগ প্রতিরোধ ক্ষমতা, গড় দুধ/মাংস উৎপাদন এবং বিনিয়োগ রিটার্নের তুলনামূলক পর্যালোচনা।
+              </p>
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {[
@@ -482,9 +566,9 @@ export const LivestockHub: React.FC<{ initialSubTab?: string }> = ({ initialSubT
                   nameBn: 'শাহীওয়াল সংকর (Sahiwal Cross)',
                   purpose: 'দুধ ও মাংস উভমুখী',
                   milkYield: '১২-১৮ লিটার / দিন',
-                  climateSuitability: 'উচ্চ সহনশীল ও তাপ প্রতিরোধী',
+                  climateSuitability: 'উচ্চ তাপ সহনশীল ও আর্দ্রতা প্রতিরোধী',
                   management: 'মাঝারি বিনিয়োগ উপযোগী',
-                  pros: 'রোগবালাই কম, কৃত্রিম প্রজননে চমৎকার ফলাফল।'
+                  pros: 'স্থানীয় আবহাওয়ায় রোগবালাই কম, কৃত্রিম প্রজননে চমৎকার ফলাফল।'
                 },
                 {
                   nameBn: 'রেড চিটাগাং ক্যাটল (RCC)',
@@ -492,7 +576,7 @@ export const LivestockHub: React.FC<{ initialSubTab?: string }> = ({ initialSubT
                   milkYield: '৪-৬ লিটার / দিন (উচ্চ ফ্যাট)',
                   climateSuitability: 'শতভাগ স্থানীয় আবহাওয়া উপযোগী',
                   management: 'স্বল্প খরচে লালন-পালন সম্ভব',
-                  pros: 'খাদ্য রূপান্তর দক্ষতা চমৎকার, স্থানীয় ঘাস খেয়েও বাঁচে।'
+                  pros: 'খাদ্য রূপান্তর দক্ষতা চমৎকার, স্থানীয় সাধারণ ঘাস খেয়েও দীর্ঘায়ু লাভ করে।'
                 },
                 {
                   nameBn: 'ব্ল্যাক বেঙ্গল ছাগল (Black Bengal)',
@@ -500,19 +584,19 @@ export const LivestockHub: React.FC<{ initialSubTab?: string }> = ({ initialSubT
                   milkYield: 'বাচ্চার জন্য পর্যাপ্ত',
                   climateSuitability: 'আর্দ্র ও উষ্ণ আবহাওয়ার সাথে খাপখায়',
                   management: 'অল্প পুঁজিতে দ্রুত বংশবৃদ্ধি',
-                  pros: 'এক সাথে ২-৩টি বাচ্চা দেয়, রোগবালাই খুব কম।'
+                  pros: 'বছরে ২ বার এবং প্রতিবারে ২-৩টি বাচ্চা দেয়, রোগ প্রতিরোধ ক্ষমতা অত্যন্ত প্রবল।'
                 }
               ].map((brd, i) => (
-                <div key={i} className="p-4 rounded-2xl bg-warmWhite border border-softBorder space-y-2.5">
+                <div key={i} className="p-4 rounded-2xl bg-warmWhite border border-softBorder space-y-3">
                   <h4 className="text-sm font-bold text-forest-dark">{brd.nameBn}</h4>
-                  <div className="text-xs space-y-1 text-primaryText">
+                  <div className="text-xs space-y-1.5 text-primaryText">
                     <p><span className="text-secondaryText">উদ্দেশ্য:</span> {brd.purpose}</p>
                     <p><span className="text-secondaryText">উৎপাদন ক্ষমতা:</span> <strong>{brd.milkYield}</strong></p>
                     <p><span className="text-secondaryText">আবহাওয়া উপযোগিতা:</span> {brd.climateSuitability}</p>
                     <p><span className="text-secondaryText">ব্যবস্থাপনা:</span> {brd.management}</p>
                   </div>
-                  <p className="text-[11px] p-2 rounded-xl bg-forest-50 text-forest-dark">
-                    <strong>সুবিধা:</strong> {brd.pros}
+                  <p className="text-[11px] p-2.5 rounded-xl bg-forest-50 text-forest-dark leading-relaxed">
+                    <strong>প্রধান সুবিধা:</strong> {brd.pros}
                   </p>
                 </div>
               ))}
@@ -526,15 +610,18 @@ export const LivestockHub: React.FC<{ initialSubTab?: string }> = ({ initialSubT
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
           {/* FCR Calculator Form */}
-          <div className="bg-white p-5 rounded-2xl border border-softBorder shadow-2xs space-y-4">
+          <div className="card-premium p-5 space-y-4">
             <div className="flex items-center space-x-2 border-b border-softBorder pb-3">
               <Calculator className="w-5 h-5 text-amber-900" />
-              <h3 className="text-sm font-bold text-forest-dark">FCR (খাদ্য রূপান্তর অনুপাত) হিসাব</h3>
+              <div>
+                <h3 className="text-sm font-bold text-forest-dark">FCR (খাদ্য রূপান্তর অনুপাত) হিসাব</h3>
+                <p className="text-[11px] text-secondaryText">Feed Conversion Ratio Calculator</p>
+              </div>
             </div>
 
-            <p className="text-xs text-secondaryText">
-              FCR = মোট ব্যবহৃত খাদ্য (কেজি) ÷ মোট অর্জিত ওজন (কেজি)
-            </p>
+            <div className="p-3 rounded-xl bg-rice/70 text-xs text-secondaryText leading-relaxed">
+              <strong>সূত্র:</strong> FCR = মোট সরবরাহকৃত খাদ্য (কেজি) ÷ মোট অর্জিত শারীরিক ওজন (কেজি)
+            </div>
 
             <div>
               <label className="block text-xs font-bold text-primaryText mb-1">মোট ব্যবহৃত খাদ্য (কেজি) *</label>
@@ -543,7 +630,7 @@ export const LivestockHub: React.FC<{ initialSubTab?: string }> = ({ initialSubT
                 min="1"
                 value={fcrFeed}
                 onChange={(e) => setFcrFeed(Number(e.target.value))}
-                className="w-full px-3 py-2 text-xs rounded-xl border border-softBorder bg-warmWhite outline-none"
+                className="input-field"
               />
             </div>
 
@@ -555,27 +642,27 @@ export const LivestockHub: React.FC<{ initialSubTab?: string }> = ({ initialSubT
                 step="0.1"
                 value={fcrWeightGain}
                 onChange={(e) => setFcrWeightGain(Number(e.target.value))}
-                className="w-full px-3 py-2 text-xs rounded-xl border border-softBorder bg-warmWhite outline-none"
+                className="input-field"
               />
             </div>
 
             <button
               onClick={handleCalculateFCR}
-              className="w-full py-2.5 rounded-xl bg-amber-900 hover:bg-amber-800 text-white font-bold text-xs shadow-sm transition"
+              className="w-full btn-clay"
             >
               FCR গণনা করুন ও সেভ করুন
             </button>
 
             {calculatedFCR !== null && (
               <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-center">
-                <span className="text-xs text-secondaryText block">গণনাকৃত FCR সূচক</span>
+                <span className="text-xs text-secondaryText block">হিসাবকৃত FCR সূচক</span>
                 <span className="text-3xl font-black text-amber-900 mt-1 block">
                   {toBengaliDigits(calculatedFCR)}
                 </span>
-                <p className="text-[11px] text-amber-800 mt-1">
+                <p className="text-[11px] text-amber-800 mt-1.5 leading-relaxed">
                   {calculatedFCR <= 7.0 
-                    ? 'চমৎকার! খাদ্য ব্যবস্থাপনা ও ওজন বৃদ্ধির অনুপাত লাভজনক সীমার মধ্যে রয়েছে।' 
-                    : 'সতর্কতা: FCR বেশি হচ্ছে। দানাদার খাদ্যের গুণমান পরীক্ষা করুন ও কৃমিনাশক দিন।'}
+                    ? '✓ চমৎকার! খাদ্য ব্যবস্থাপনা ও শারীরিক ওজন বৃদ্ধির অনুপাত লাভজনক সীমার মধ্যে রয়েছে।' 
+                    : '⚠️ সতর্কতা: FCR তুলনামূলক বেশি। দানাদার খাদ্যের পুষ্টিমান পরীক্ষা করুন ও নিয়মিত কৃমিনাশক প্রদান করুন।'}
                 </p>
               </div>
             )}
@@ -583,8 +670,11 @@ export const LivestockHub: React.FC<{ initialSubTab?: string }> = ({ initialSubT
 
           {/* Daily Nutrition & Feeding Logs */}
           <div className="lg:col-span-2 space-y-4">
-            <div className="bg-white p-5 rounded-2xl border border-softBorder shadow-2xs">
-              <h3 className="text-sm font-bold text-forest-dark mb-3">দৈনিক খাদ্য সরবরাহ ও FCR হিস্ট্রি</h3>
+            <div className="card-premium p-5">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-bold text-forest-dark">দৈনিক খাদ্য সরবরাহ ও FCR হিস্ট্রি</h3>
+                <span className="text-xs text-secondaryText">সর্বশেষ রেকর্ডকৃত লগ</span>
+              </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs">
                   <thead>
@@ -598,7 +688,7 @@ export const LivestockHub: React.FC<{ initialSubTab?: string }> = ({ initialSubT
                   </thead>
                   <tbody className="divide-y divide-softBorder">
                     {feedingLogs.map((log) => (
-                      <tr key={log.id} className="hover:bg-warmWhite">
+                      <tr key={log.id} className="hover:bg-warmWhite transition">
                         <td className="py-2.5 px-3 font-semibold">{toBengaliDigits(log.date)}</td>
                         <td className="py-2.5 px-3">{log.feedType}</td>
                         <td className="py-2.5 px-3 font-bold">{toBengaliDigits(log.feedQuantityKg)} কেজি</td>
@@ -621,52 +711,65 @@ export const LivestockHub: React.FC<{ initialSubTab?: string }> = ({ initialSubT
       {activeTab === 'vaccines' && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-forest-dark">টিকা ও কৃমিনাশক ট্র্যাকার</h3>
+            <div>
+              <h3 className="text-sm font-bold text-forest-dark">টিকা ও কৃমিনাশক শিডিউল ট্র্যাকার</h3>
+              <p className="text-xs text-secondaryText">খুরারোগ, অ্যানথ্রাক্স, তড়কা ও কৃমিনাশক ডোজ ক্যালেন্ডার</p>
+            </div>
             <button
               onClick={() => setShowVacModal(true)}
-              className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-forest text-white text-xs font-bold hover:bg-forest-dark transition"
+              className="btn-primary text-xs"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>টিকা রেকর্ড যোগ করুন</span>
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {vaccinations.map((vac) => (
-              <div key={vac.id} className="p-4 rounded-2xl bg-white border border-softBorder shadow-2xs space-y-2.5">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h4 className="text-xs font-bold text-forest-dark">{vac.vaccineName}</h4>
-                    <span className="text-[11px] text-mutedText font-mono">{vac.animalIdOrGroup}</span>
+          {vaccinations.length === 0 ? (
+            <EmptyState
+              icon={Syringe}
+              title="কোনো টিকা বা কৃমিনাশকের শিডিউল নেই"
+              description="পশুর জীবন রক্ষাকারী ভ্যাকসিন ও কৃমিনাশক শিডিউল যোগ করে সময়মতো রিমাইন্ডার পান।"
+              actionLabel="+ টিকা রেকর্ড যোগ করুন"
+              onAction={() => setShowVacModal(true)}
+            />
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {vaccinations.map((vac) => (
+                <div key={vac.id} className="card-premium p-4.5 space-y-3">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h4 className="text-xs font-bold text-forest-dark">{vac.vaccineName}</h4>
+                      <span className="text-[11px] text-mutedText font-mono">{vac.animalIdOrGroup}</span>
+                    </div>
+                    <StatusBadge status={vac.status} size="sm" />
                   </div>
-                  <StatusBadge status={vac.status} size="sm" />
-                </div>
 
-                <div className="grid grid-cols-2 gap-2 text-xs py-2 border-y border-softBorder">
-                  <div>
-                    <span className="text-[10px] text-secondaryText block">প্রয়োগের তারিখ</span>
-                    <span className="font-semibold">{toBengaliDigits(vac.administeredDate)}</span>
+                  <div className="grid grid-cols-2 gap-2 text-xs py-2 border-y border-softBorder">
+                    <div>
+                      <span className="text-[10px] text-secondaryText block">প্রয়োগের তারিখ</span>
+                      <span className="font-semibold text-primaryText">{toBengaliDigits(vac.administeredDate)}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-secondaryText block">পরবর্তী বুস্টার ডোজ</span>
+                      <span className="font-bold text-status-warning">{toBengaliDigits(vac.nextDueDate)}</span>
+                    </div>
                   </div>
-                  <div>
-                    <span className="text-[10px] text-secondaryText block">পরবর্তী বুস্টার ডোজ</span>
-                    <span className="font-bold text-status-warning">{toBengaliDigits(vac.nextDueDate)}</span>
-                  </div>
-                </div>
 
-                <div className="flex items-center justify-between pt-1 text-[11px]">
-                  <span className="text-secondaryText">চিকিৎসক: {vac.veterinarian}</span>
-                  {vac.status !== 'completed' && (
-                    <button
-                      onClick={() => updateVaccinationStatus(vac.id, 'completed')}
-                      className="px-2.5 py-1 rounded-lg bg-forest/10 hover:bg-forest text-forest hover:text-white font-bold transition"
-                    >
-                      ✓ প্রয়োগ সম্পন্ন করুন
-                    </button>
-                  )}
+                  <div className="flex items-center justify-between pt-1 text-[11px]">
+                    <span className="text-secondaryText">চিকিৎসক: {vac.veterinarian}</span>
+                    {vac.status !== 'completed' && (
+                      <button
+                        onClick={() => updateVaccinationStatus(vac.id, 'completed')}
+                        className="px-3 py-1 rounded-lg bg-forest/10 hover:bg-forest text-forest hover:text-white font-bold transition text-xs"
+                      >
+                        ✓ প্রয়োগ সম্পন্ন করুন
+                      </button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -681,7 +784,7 @@ export const LivestockHub: React.FC<{ initialSubTab?: string }> = ({ initialSubT
               </div>
               <div>
                 <h3 className="text-sm font-bold">এআই ভেট সহকারী (AI Vet Assistant)</h3>
-                <p className="text-[11px] text-warmWhite/80">পশু স্বাস্থ্য নিরীক্ষা ও প্রাথমিক চিকিৎসা পরামর্শ</p>
+                <p className="text-[11px] text-warmWhite/80">পশু স্বাস্থ্য নিরীক্ষা ও জরুরি প্রাথমিক চিকিৎসা পরামর্শ</p>
               </div>
             </div>
 
@@ -725,7 +828,7 @@ export const LivestockHub: React.FC<{ initialSubTab?: string }> = ({ initialSubT
                         }}
                         className="px-3 py-1.5 rounded-lg bg-status-error text-white font-bold text-xs hover:bg-red-700 transition"
                       >
-                        🚨 ডাক্তার কল করুন
+                        🚨 জরুরি ডাক্তার কল করুন
                       </button>
                     </div>
                   )}
@@ -738,14 +841,14 @@ export const LivestockHub: React.FC<{ initialSubTab?: string }> = ({ initialSubT
           <form onSubmit={handleSendVetAI} className="p-3 bg-white border-t border-softBorder flex items-center space-x-2">
             <input
               type="text"
-              placeholder="পশুর অসুস্থতা ও লক্ষণ লিখুন (যেমন: হঠাৎ দুধ কমে গেছে এবং ক্ষুরে ঘা)..."
+              placeholder="পশুর লক্ষণ লিখুন (যেমন: হঠাৎ দুধ কমে গেছে এবং ক্ষুরে ঘা দেখা দিয়েছে)..."
               value={vetInput}
               onChange={(e) => setVetInput(e.target.value)}
-              className="flex-1 px-4 py-2.5 text-xs rounded-xl border border-softBorder bg-warmWhite outline-none focus:border-amber-900"
+              className="flex-1 input-field"
             />
             <button
               type="submit"
-              className="px-5 py-2.5 rounded-xl bg-amber-900 hover:bg-amber-800 text-white font-bold text-xs transition"
+              className="btn-clay text-xs shrink-0"
             >
               পাঠান
             </button>
@@ -756,16 +859,16 @@ export const LivestockHub: React.FC<{ initialSubTab?: string }> = ({ initialSubT
       {/* TAB 8: EMERGENCY VET SUPPORT (Verified Doctors & Booking) */}
       {activeTab === 'emergency' && (
         <div className="space-y-4">
-          <div className="p-3 rounded-xl bg-red-50 border border-red-200 flex items-center justify-between text-xs text-status-error">
-            <div className="flex items-center space-x-2">
-              <ShieldAlert className="w-5 h-5 text-status-error" />
+          <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 flex items-center justify-between text-xs text-status-error">
+            <div className="flex items-center space-x-2.5">
+              <ShieldAlert className="w-5 h-5 text-status-error shrink-0" />
               <span><strong>জরুরি সহায়তা হটলাইন:</strong> ১৬১২৩ (সরকারি প্রাণিসম্পদ জরুরি সেবা) অথবা সরাসরি নিচে থাকা চিকিৎসকদের সাথে অডিও/ভিডিও কলে যুক্ত হন।</span>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {experts.filter(e => e.category === 'veterinary').map((vet) => (
-              <div key={vet.id} className="p-5 rounded-2xl bg-white border border-softBorder shadow-2xs flex items-start space-x-4">
+              <div key={vet.id} className="card-premium p-5 flex items-start space-x-4">
                 <img src={vet.avatarUrl} alt={vet.name} className="w-16 h-16 rounded-2xl object-cover border border-softBorder shrink-0" />
                 <div className="flex-1">
                   <div className="flex items-center space-x-2">
@@ -773,7 +876,7 @@ export const LivestockHub: React.FC<{ initialSubTab?: string }> = ({ initialSubT
                     <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold">ভেরিফাইড</span>
                   </div>
                   <p className="text-xs text-secondaryText font-medium mt-0.5">{vet.designationBn}</p>
-                  <p className="text-[11px] text-mutedText mt-1">{vet.aboutBn}</p>
+                  <p className="text-[11px] text-mutedText mt-1 leading-relaxed">{vet.aboutBn}</p>
                   <div className="mt-3 flex items-center justify-between pt-2 border-t border-softBorder">
                     <span className="text-xs font-bold text-amber-900">ফি: ৳ {toBengaliDigits(vet.consultationFee)}</span>
                     <button
@@ -793,7 +896,7 @@ export const LivestockHub: React.FC<{ initialSubTab?: string }> = ({ initialSubT
                           preferredTime: 'NOW'
                         });
                       }}
-                      className="px-4 py-1.5 rounded-xl bg-status-error hover:bg-red-700 text-white font-bold text-xs transition shadow-sm"
+                      className="px-4 py-1.5 rounded-xl bg-status-error hover:bg-red-700 text-white font-bold text-xs transition shadow-xs"
                     >
                       জরুরি কল শুরু করুন
                     </button>
@@ -812,7 +915,7 @@ export const LivestockHub: React.FC<{ initialSubTab?: string }> = ({ initialSubT
         title="নতুন পশুর খামার যুক্ত করুন"
         maxWidth="md"
       >
-        <form onSubmit={handleSaveFarm} className="space-y-3 text-xs">
+        <form onSubmit={handleSaveFarm} className="space-y-3.5 text-xs">
           <div>
             <label className="block font-bold text-primaryText mb-1">খামারের নাম *</label>
             <input
@@ -821,16 +924,16 @@ export const LivestockHub: React.FC<{ initialSubTab?: string }> = ({ initialSubT
               placeholder="যেমন: গ্রীন ভ্যালি ডেইরি শেড"
               value={farmName}
               onChange={(e) => setFarmName(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl border border-softBorder outline-none bg-warmWhite"
+              className="input-field"
             />
           </div>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block font-bold text-primaryText mb-1">পশুর ধরন</label>
               <select
                 value={livestockType}
                 onChange={(e) => setLivestockType(e.target.value as any)}
-                className="w-full px-2.5 py-2 rounded-xl border border-softBorder outline-none bg-warmWhite"
+                className="input-field"
               >
                 <option value="cattle">গরু / ডেইরি (Cattle)</option>
                 <option value="goat">ছাগল (Goat)</option>
@@ -842,7 +945,7 @@ export const LivestockHub: React.FC<{ initialSubTab?: string }> = ({ initialSubT
               <select
                 value={purpose}
                 onChange={(e) => setPurpose(e.target.value)}
-                className="w-full px-2.5 py-2 rounded-xl border border-softBorder outline-none bg-warmWhite"
+                className="input-field"
               >
                 <option value="Dairy (দুগ্ধ)">দুগ্ধ খামার (Dairy)</option>
                 <option value="Fattening (হৃষ্টপুষ্টকরণ)">মোটাতাজাকরণ (Fattening)</option>
@@ -850,14 +953,14 @@ export const LivestockHub: React.FC<{ initialSubTab?: string }> = ({ initialSubT
               </select>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block font-bold text-primaryText mb-1">পশুর সংখ্যা</label>
               <input
                 type="number"
                 value={animalCount}
                 onChange={(e) => setAnimalCount(Number(e.target.value))}
-                className="w-full px-3 py-2 rounded-xl border border-softBorder outline-none bg-warmWhite"
+                className="input-field"
               />
             </div>
             <div>
@@ -866,21 +969,21 @@ export const LivestockHub: React.FC<{ initialSubTab?: string }> = ({ initialSubT
                 type="number"
                 value={spaceSqFt}
                 onChange={(e) => setSpaceSqFt(Number(e.target.value))}
-                className="w-full px-3 py-2 rounded-xl border border-softBorder outline-none bg-warmWhite"
+                className="input-field"
               />
             </div>
           </div>
-          <div className="flex justify-end space-x-2 pt-3 border-t border-softBorder">
+          <div className="flex justify-end gap-2 pt-3 border-t border-softBorder">
             <button
               type="button"
               onClick={() => setShowFarmModal(false)}
-              className="px-4 py-2 font-semibold text-secondaryText"
+              className="btn-secondary text-xs"
             >
               বাতিল
             </button>
             <button
               type="submit"
-              className="px-5 py-2 font-bold text-white bg-amber-900 rounded-xl hover:bg-amber-800 transition"
+              className="btn-clay text-xs"
             >
               সংরক্ষণ করুন
             </button>
@@ -895,7 +998,7 @@ export const LivestockHub: React.FC<{ initialSubTab?: string }> = ({ initialSubT
         title="নতুন পশুর একক নিবন্ধন (Tag ID)"
         maxWidth="md"
       >
-        <form onSubmit={handleSaveAnimal} className="space-y-3 text-xs">
+        <form onSubmit={handleSaveAnimal} className="space-y-3.5 text-xs">
           <div>
             <label className="block font-bold text-primaryText mb-1">ট্যাগ নম্বর (Tag ID) *</label>
             <input
@@ -904,17 +1007,17 @@ export const LivestockHub: React.FC<{ initialSubTab?: string }> = ({ initialSubT
               placeholder="যেমন: COW-BD-045"
               value={tagNumber}
               onChange={(e) => setTagNumber(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl border border-softBorder outline-none bg-warmWhite font-mono"
+              className="input-field font-mono"
             />
           </div>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block font-bold text-primaryText mb-1">জাত (Breed)</label>
               <input
                 type="text"
                 value={animalBreed}
                 onChange={(e) => setAnimalBreed(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-softBorder outline-none bg-warmWhite"
+                className="input-field"
               />
             </div>
             <div>
@@ -923,18 +1026,18 @@ export const LivestockHub: React.FC<{ initialSubTab?: string }> = ({ initialSubT
                 type="number"
                 value={animalAge}
                 onChange={(e) => setAnimalAge(Number(e.target.value))}
-                className="w-full px-3 py-2 rounded-xl border border-softBorder outline-none bg-warmWhite"
+                className="input-field"
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block font-bold text-primaryText mb-1">ওজন (কেজি)</label>
               <input
                 type="number"
                 value={animalWeight}
                 onChange={(e) => setAnimalWeight(Number(e.target.value))}
-                className="w-full px-3 py-2 rounded-xl border border-softBorder outline-none bg-warmWhite"
+                className="input-field"
               />
             </div>
             <div>
@@ -942,7 +1045,7 @@ export const LivestockHub: React.FC<{ initialSubTab?: string }> = ({ initialSubT
               <select
                 value={animalHealth}
                 onChange={(e) => setAnimalHealth(e.target.value)}
-                className="w-full px-2 py-2 rounded-xl border border-softBorder outline-none bg-warmWhite"
+                className="input-field"
               >
                 <option value="healthy">সুস্থ (Healthy)</option>
                 <option value="treatment">চিকিৎসাধীন (Treatment)</option>
@@ -950,17 +1053,17 @@ export const LivestockHub: React.FC<{ initialSubTab?: string }> = ({ initialSubT
               </select>
             </div>
           </div>
-          <div className="flex justify-end space-x-2 pt-3 border-t border-softBorder">
+          <div className="flex justify-end gap-2 pt-3 border-t border-softBorder">
             <button
               type="button"
               onClick={() => setShowAnimalModal(false)}
-              className="px-4 py-2 font-semibold text-secondaryText"
+              className="btn-secondary text-xs"
             >
               বাতিল
             </button>
             <button
               type="submit"
-              className="px-5 py-2 font-bold text-white bg-forest rounded-xl hover:bg-forest-dark transition"
+              className="btn-primary text-xs"
             >
               নিবন্ধন সম্পন্ন
             </button>
@@ -975,7 +1078,7 @@ export const LivestockHub: React.FC<{ initialSubTab?: string }> = ({ initialSubT
         title="টিকা ও কৃমিনাশক শিডিউল রেকর্ড"
         maxWidth="md"
       >
-        <form onSubmit={handleSaveVaccination} className="space-y-3 text-xs">
+        <form onSubmit={handleSaveVaccination} className="space-y-3.5 text-xs">
           <div>
             <label className="block font-bold text-primaryText mb-1">টিকার নাম *</label>
             <input
@@ -983,17 +1086,17 @@ export const LivestockHub: React.FC<{ initialSubTab?: string }> = ({ initialSubT
               required
               value={vacName}
               onChange={(e) => setVacName(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl border border-softBorder outline-none bg-warmWhite"
+              className="input-field"
             />
           </div>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block font-bold text-primaryText mb-1">প্রয়োগের তারিখ</label>
               <input
                 type="date"
                 value={vacAdminDate}
                 onChange={(e) => setVacAdminDate(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-softBorder outline-none bg-warmWhite"
+                className="input-field"
               />
             </div>
             <div>
@@ -1002,7 +1105,7 @@ export const LivestockHub: React.FC<{ initialSubTab?: string }> = ({ initialSubT
                 type="date"
                 value={vacNextDate}
                 onChange={(e) => setVacNextDate(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-softBorder outline-none bg-warmWhite"
+                className="input-field"
               />
             </div>
           </div>
@@ -1012,20 +1115,20 @@ export const LivestockHub: React.FC<{ initialSubTab?: string }> = ({ initialSubT
               type="text"
               value={vacVet}
               onChange={(e) => setVacVet(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl border border-softBorder outline-none bg-warmWhite"
+              className="input-field"
             />
           </div>
-          <div className="flex justify-end space-x-2 pt-3 border-t border-softBorder">
+          <div className="flex justify-end gap-2 pt-3 border-t border-softBorder">
             <button
               type="button"
               onClick={() => setShowVacModal(false)}
-              className="px-4 py-2 font-semibold text-secondaryText"
+              className="btn-secondary text-xs"
             >
               বাতিল
             </button>
             <button
               type="submit"
-              className="px-5 py-2 font-bold text-white bg-forest rounded-xl hover:bg-forest-dark transition"
+              className="btn-primary text-xs"
             >
               সংরক্ষণ করুন
             </button>

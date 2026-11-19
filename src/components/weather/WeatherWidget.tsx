@@ -220,3 +220,4 @@ export const WeatherWidget: React.FC = () => {
     </div>
   );
 };
+
