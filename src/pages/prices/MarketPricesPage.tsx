@@ -181,8 +181,8 @@ export const MarketPricesPage: React.FC = () => {
           onClick={() => setActiveSubTab('simulation')}
           className={`subtab-pill ${
             activeSubTab === 'simulation' 
-              ? 'bg-purple-900 text-white shadow-xs' 
-              : 'bg-white text-secondaryText hover:text-purple-900 hover:bg-purple-50'
+              ? 'bg-river-dark text-white shadow-xs' 
+              : 'bg-white text-secondaryText hover:text-river-dark hover:bg-river/10'
           }`}
         >
           <Play className="w-3.5 h-3.5 shrink-0" />
@@ -311,7 +311,75 @@ export const MarketPricesPage: React.FC = () => {
             />
           ) : (
             <div className="card-premium overflow-hidden">
-              <div className="overflow-x-auto">
+              {/* Mobile Cards View (sm:hidden for Android & mobile screens) */}
+              <div className="sm:hidden divide-y divide-softBorder">
+                {filteredPrices.map((item) => {
+                  const isSelected = activeItemForChart.id === item.id;
+                  return (
+                    <div
+                      key={item.id}
+                      onClick={() => setActiveItemForChart(item)}
+                      className={`p-4 transition cursor-pointer space-y-2.5 ${
+                        isSelected ? 'bg-forest/5 border-l-4 border-l-forest' : 'hover:bg-warmWhite'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rice text-secondaryText uppercase">
+                            {item.sector} • {item.category}
+                          </span>
+                          <h4 className="font-bold text-forest-dark text-sm mt-1">
+                            {language === 'bn' ? item.productBn : item.product}
+                          </h4>
+                          <p className="text-[11px] text-mutedText flex items-center space-x-1 mt-0.5">
+                            <MapPin className="w-3 h-3 text-clay shrink-0" />
+                            <span>{item.marketLocation}, {item.district}</span>
+                          </p>
+                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setAlertProduct(item.productBn);
+                            setAlertSector(item.sector);
+                            setAlertDistrict(item.district);
+                            setAlertTargetPrice(item.wholesalePrice);
+                            setAlertUnit(item.unit);
+                            setShowAlertModal(true);
+                          }}
+                          className="px-3 py-1.5 text-xs font-bold rounded-xl bg-harvest-light text-harvest-dark hover:bg-harvest/30 transition shrink-0 active:scale-95 shadow-2xs"
+                        >
+                          + অ্যালার্ট
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 p-2.5 rounded-xl bg-rice/60 text-xs">
+                        <div>
+                          <span className="text-[10px] text-mutedText block">পাইকারি দর</span>
+                          <span className="text-base font-black text-forest">
+                            ৳ {toBengaliDigits(item.wholesalePrice)}
+                          </span>
+                          <span className="text-[10px] text-secondaryText"> / {item.unit === 'maund' ? 'মণ' : item.unit === 'kg' ? 'কেজি' : 'একক'}</span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-mutedText block">খুচরা মূল্য</span>
+                          <span className="text-sm font-bold text-primaryText">
+                            ৳ {toBengaliDigits(item.retailPrice)}
+                          </span>
+                          <span className="text-[10px] text-secondaryText"> / {item.unit === 'maund' ? 'মণ' : item.unit === 'kg' ? 'কেজি' : 'একক'}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between text-[11px] text-mutedText pt-1">
+                        <span>দৈনিক রেঞ্জ: ৳{toBengaliDigits(item.minPrice)} - ৳{toBengaliDigits(item.maxPrice)}</span>
+                        <span>{item.recordedTimestamp}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Desktop Table View (hidden sm:block) */}
+              <div className="hidden sm:block overflow-x-auto">
                 <table className="w-full text-left text-xs">
                   <thead>
                     <tr className="bg-rice border-b border-softBorder text-secondaryText">
@@ -474,14 +542,14 @@ export const MarketPricesPage: React.FC = () => {
       {activeSubTab === 'simulation' && (
         <div className="card-premium p-5 space-y-4 max-w-2xl">
           <div className="flex items-center space-x-2 border-b border-softBorder pb-3">
-            <Play className="w-5 h-5 text-purple-700" />
+            <Play className="w-5 h-5 text-river" />
             <div>
               <h3 className="text-sm font-bold text-forest-dark">মূল্য পরিবর্তন ও নোটিফিকেশন টেস্ট ল্যাব</h3>
               <p className="text-xs text-secondaryText">আড়তের দাম পরিবর্তিত হলে কীভাবে অ্যালার্ট ট্রিগার হয় তার বাস্তব প্রদর্শনী</p>
             </div>
           </div>
 
-          <div className="p-3.5 rounded-xl bg-purple-50 border border-purple-200 text-xs text-purple-950 space-y-2">
+          <div className="p-3.5 rounded-xl bg-river/10 border border-river/25 text-xs text-river-dark space-y-2">
             <p className="leading-relaxed">
               <strong>টেস্ট সিনারিও:</strong> আপনি ব্রি ধান-২৮ এর পাইকারি দর ৳ ১৩৫০ বা তার বেশিতে পৌঁছালে সতর্কবার্তা পাওয়ার জন্য অ্যালার্ট তৈরি করেছেন। নিচের ইনপুটে দর পরিবর্তন করে টেস্ট ট্রিগার করুন।
             </p>

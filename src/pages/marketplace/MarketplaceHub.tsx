@@ -23,6 +23,8 @@ import {
   Phone, 
   X,
   ChevronRight,
+  ChevronLeft,
+  ArrowLeft,
   Info,
   Calendar,
   Layers,
@@ -106,6 +108,7 @@ export const MarketplaceHub: React.FC<{ initialSubTab?: string }> = ({ initialSu
 
   // Active Negotiation Chat State
   const [activeInquiryId, setActiveInquiryId] = useState<string>(inquiries[0]?.id || '');
+  const [showMobileChat, setShowMobileChat] = useState<boolean>(false);
   const [chatInputText, setChatInputText] = useState('');
   const [counterPriceInput, setCounterPriceInput] = useState<number | ''>('');
   const [counterQtyInput, setCounterQtyInput] = useState<number | ''>('');
@@ -571,7 +574,9 @@ export const MarketplaceHub: React.FC<{ initialSubTab?: string }> = ({ initialSu
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
           {/* Inquiries List Column */}
-          <div className="space-y-3 bg-white p-4 sm:p-5 rounded-2xl border border-softBorder shadow-2xs h-[600px] overflow-y-auto">
+          <div className={`space-y-3 bg-white p-4 sm:p-5 rounded-2xl border border-softBorder shadow-2xs h-[600px] overflow-y-auto ${
+            showMobileChat ? 'hidden lg:block' : 'block'
+          }`}>
             <h3 className="text-xs font-bold text-forest-dark uppercase tracking-wider mb-2">
               দরদাম আলোচনা ({inquiries.length})
             </h3>
@@ -584,8 +589,11 @@ export const MarketplaceHub: React.FC<{ initialSubTab?: string }> = ({ initialSu
                 return (
                   <div
                     key={inq.id}
-                    onClick={() => setActiveInquiryId(inq.id)}
-                    className={`p-3.5 rounded-xl border cursor-pointer transition text-xs space-y-1 ${
+                    onClick={() => {
+                      setActiveInquiryId(inq.id);
+                      setShowMobileChat(true);
+                    }}
+                    className={`p-3.5 rounded-xl border cursor-pointer transition text-xs space-y-1 active:scale-[0.99] ${
                       isSelected ? 'bg-forest-50 border-forest text-forest-dark font-medium shadow-2xs' : 'bg-warmWhite border-softBorder text-primaryText hover:bg-rice'
                     }`}
                   >
@@ -605,26 +613,35 @@ export const MarketplaceHub: React.FC<{ initialSubTab?: string }> = ({ initialSu
           </div>
 
           {/* Active Chat & Negotiation Room */}
-          <div className="lg:col-span-2 bg-white rounded-2xl border border-softBorder shadow-2xs overflow-hidden flex flex-col h-[600px]">
+          <div className={`lg:col-span-2 bg-white rounded-2xl border border-softBorder shadow-2xs overflow-hidden flex flex-col h-[600px] ${
+            !showMobileChat ? 'hidden lg:flex' : 'flex'
+          }`}>
             {currentInquiry ? (
               <>
                 {/* Negotiation Header */}
-                <div className="bg-gradient-to-r from-forest-900 to-forest-dark text-white p-4 sm:p-5 flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center font-bold">
-                      <MessageSquare className="w-5 h-5 text-emerald-300" />
+                <div className="bg-gradient-to-r from-forest-900 to-forest-dark text-white p-4 sm:p-5 flex items-center justify-between gap-2">
+                  <div className="flex items-center space-x-2.5 sm:space-x-3">
+                    <button
+                      onClick={() => setShowMobileChat(false)}
+                      className="lg:hidden p-1.5 rounded-lg bg-white/10 hover:bg-white/20 active:bg-white/30 text-white transition shrink-0 flex items-center"
+                      title="আলোচনা তালিকায় ফিরে যান"
+                    >
+                      <ChevronLeft className="w-5 h-5" />
+                    </button>
+                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white/10 flex items-center justify-center font-bold shrink-0">
+                      <MessageSquare className="w-5 h-5 text-forest-leaf" />
                     </div>
                     <div>
-                      <h4 className="text-sm sm:text-base font-bold">{currentInquiry.productName}</h4>
-                      <p className="text-xs text-rice/80">
+                      <h4 className="text-sm sm:text-base font-bold truncate max-w-[180px] sm:max-w-none">{currentInquiry.productName}</h4>
+                      <p className="text-[11px] sm:text-xs text-rice/80 truncate max-w-[180px] sm:max-w-none">
                         ক্রেতা: {currentInquiry.buyerName} • ফোন: {currentInquiry.buyerPhone}
                       </p>
                     </div>
                   </div>
 
-                  <div className="text-right">
+                  <div className="text-right shrink-0">
                     <span className="text-[10px] text-rice/70 block">বর্তমান প্রস্তাবিত দর</span>
-                    <span className="text-base sm:text-lg font-black text-harvest">
+                    <span className="text-sm sm:text-lg font-black text-harvest">
                       ৳ {toBengaliDigits(currentInquiry.currentAgreedPrice)} / {currentInquiry.unit}
                     </span>
                   </div>
@@ -698,23 +715,25 @@ export const MarketplaceHub: React.FC<{ initialSubTab?: string }> = ({ initialSu
                 </div>
 
                 {/* Counter Offer & Message Input Form */}
-                <form onSubmit={handleSendMessageInChat} className="p-3.5 bg-white border-t border-softBorder space-y-2">
-                  <div className="flex items-center space-x-2 text-xs">
+                <form onSubmit={handleSendMessageInChat} className="p-3.5 bg-white border-t border-softBorder space-y-2.5">
+                  <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 text-xs">
                     <span className="text-[11px] text-mutedText font-semibold shrink-0">কাউন্টার অফার দিন (ঐচ্ছিক):</span>
-                    <input
-                      type="number"
-                      placeholder={`নতুন দর ৳/${currentInquiry.unit}`}
-                      value={counterPriceInput}
-                      onChange={(e) => setCounterPriceInput(e.target.value === '' ? '' : Number(e.target.value))}
-                      className="input-field w-32 py-1.5 text-xs font-bold"
-                    />
-                    <input
-                      type="number"
-                      placeholder={`পরিমাণ (${currentInquiry.unit})`}
-                      value={counterQtyInput}
-                      onChange={(e) => setCounterQtyInput(e.target.value === '' ? '' : Number(e.target.value))}
-                      className="input-field w-28 py-1.5 text-xs font-bold"
-                    />
+                    <div className="flex items-center space-x-2 flex-1 w-full sm:w-auto">
+                      <input
+                        type="number"
+                        placeholder={`নতুন দর ৳/${currentInquiry.unit}`}
+                        value={counterPriceInput}
+                        onChange={(e) => setCounterPriceInput(e.target.value === '' ? '' : Number(e.target.value))}
+                        className="input-field flex-1 sm:w-32 py-1.5 text-xs font-bold"
+                      />
+                      <input
+                        type="number"
+                        placeholder={`পরিমাণ (${currentInquiry.unit})`}
+                        value={counterQtyInput}
+                        onChange={(e) => setCounterQtyInput(e.target.value === '' ? '' : Number(e.target.value))}
+                        className="input-field flex-1 sm:w-28 py-1.5 text-xs font-bold"
+                      />
+                    </div>
                   </div>
 
                   <div className="flex items-center space-x-2">
@@ -727,10 +746,10 @@ export const MarketplaceHub: React.FC<{ initialSubTab?: string }> = ({ initialSu
                     />
                     <button
                       type="submit"
-                      className="btn-primary shrink-0"
+                      className="btn-primary shrink-0 min-h-[42px] px-4"
                     >
                       <Send className="w-4 h-4" />
-                      <span>পাঠান</span>
+                      <span className="hidden sm:inline">পাঠান</span>
                     </button>
                   </div>
                 </form>

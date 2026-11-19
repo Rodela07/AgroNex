@@ -51,7 +51,10 @@ export const App: React.FC = () => {
       )}
 
       {/* Top Navbar */}
-      <Navbar onOpenMobileMenu={() => setMobileDrawerOpen(true)} />
+      <Navbar 
+        onOpenMobileMenu={() => setMobileDrawerOpen(true)} 
+        onSelectTab={(tab) => handleNavigate(tab)}
+      />
 
       {/* Main Body with Sidebar + Main Content */}
       <div className="flex-1 flex overflow-hidden">
@@ -64,7 +67,7 @@ export const App: React.FC = () => {
         />
 
         {/* Main Content Area */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full pb-20 md:pb-8 overflow-y-auto">
+        <main className="flex-1 p-3.5 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full pb-24 sm:pb-20 md:pb-8 overflow-y-auto">
           {currentTab === 'dashboard' && <HomeDashboard onNavigate={handleNavigate} />}
           {currentTab === 'agriculture' && <AgricultureHub key={`agriculture_${currentSubTab}`} initialSubTab={currentSubTab} />}
           {currentTab === 'livestock' && <LivestockHub key={`livestock_${currentSubTab}`} initialSubTab={currentSubTab} />}

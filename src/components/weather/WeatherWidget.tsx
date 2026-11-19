@@ -100,7 +100,7 @@ export const WeatherWidget: React.FC = () => {
             <p className="text-xs text-rice/80">{weatherData.condition}</p>
           </div>
 
-          <div className="flex items-center space-x-6">
+          <div className="flex flex-wrap sm:flex-nowrap items-center justify-between sm:justify-end gap-4 w-full sm:w-auto">
             <div className="flex items-center space-x-2">
               <Thermometer className="w-8 h-8 text-harvest" />
               <div>
@@ -122,7 +122,7 @@ export const WeatherWidget: React.FC = () => {
                 <span className="text-[10px] text-rice/70">{language === 'bn' ? 'আর্দ্রতা' : 'Humidity'}</span>
               </div>
               <div>
-                <Wind className="w-4 h-4 text-teal-300 mx-auto" />
+                <Wind className="w-4 h-4 text-forest-leaf mx-auto" />
                 <span className="text-xs font-bold block mt-0.5">
                   {language === 'bn' ? toBengaliDigits(weatherData.windKmh) : weatherData.windKmh} km/h
                 </span>

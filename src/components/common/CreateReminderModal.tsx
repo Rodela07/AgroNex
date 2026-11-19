@@ -65,7 +65,7 @@ export const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="block font-bold text-primaryText mb-1">
               {language === 'bn' ? 'বিভাগ / সেক্টর' : 'Sector'}
@@ -86,7 +86,7 @@ export const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
                   setStage('জলের প্যারামিটার টেস্ট ও চুন');
                 }
               }}
-              className="input-field"
+              className="input-field font-medium"
             >
               <option value="agriculture">{language === 'bn' ? 'কৃষি ফসল (Agriculture)' : 'Agriculture'}</option>
               <option value="livestock">{language === 'bn' ? 'পশু ও ডেইরি (Livestock)' : 'Livestock'}</option>
@@ -103,12 +103,12 @@ export const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
               required
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="input-field"
+              className="input-field font-medium"
             />
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="block font-bold text-primaryText mb-1">
               {language === 'bn' ? 'কাজের পর্যায় / স্টেজ' : 'Stage / Category'}

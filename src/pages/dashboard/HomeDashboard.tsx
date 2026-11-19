@@ -111,7 +111,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({ onNavigate }) => {
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
           <button
             onClick={() => onNavigate('agriculture', 'troubleshoot')}
-            className="flex flex-col items-center p-3 rounded-xl bg-emerald-50/70 hover:bg-emerald-100/80 border border-emerald-200 text-forest text-center transition group"
+            className="flex flex-col items-center p-3 rounded-xl bg-forest/10 hover:bg-forest/15 border border-forest/20 text-forest text-center transition group active:scale-95 min-h-[72px] justify-center"
           >
             <Bot className="w-5 h-5 text-forest-leaf mb-1 group-hover:scale-110 transition" />
             <span className="text-xs font-bold">{language === 'bn' ? 'কৃষি এআই' : 'Ask AI'}</span>
@@ -119,7 +119,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({ onNavigate }) => {
 
           <button
             onClick={() => onNavigate('agriculture', 'lands')}
-            className="flex flex-col items-center p-3 rounded-xl bg-rice hover:bg-white border border-softBorder text-primaryText text-center transition group"
+            className="flex flex-col items-center p-3 rounded-xl bg-rice hover:bg-white border border-softBorder text-primaryText text-center transition group active:scale-95 min-h-[72px] justify-center"
           >
             <Sprout className="w-5 h-5 text-forest mb-1 group-hover:scale-110 transition" />
             <span className="text-xs font-bold">{language === 'bn' ? 'জমি যোগ' : 'Add Land'}</span>
@@ -127,15 +127,15 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({ onNavigate }) => {
 
           <button
             onClick={() => onNavigate('livestock', 'farms')}
-            className="flex flex-col items-center p-3 rounded-xl bg-amber-50/70 hover:bg-amber-100/80 border border-amber-200 text-amber-900 text-center transition group"
+            className="flex flex-col items-center p-3 rounded-xl bg-clay-light/60 hover:bg-clay-light border border-clay/20 text-clay-dark text-center transition group active:scale-95 min-h-[72px] justify-center"
           >
-            <Beef className="w-5 h-5 text-amber-800 mb-1 group-hover:scale-110 transition" />
+            <Beef className="w-5 h-5 text-clay mb-1 group-hover:scale-110 transition" />
             <span className="text-xs font-bold">{language === 'bn' ? 'খামার যোগ' : 'Add Farm'}</span>
           </button>
 
           <button
             onClick={() => onNavigate('fisheries', 'ponds')}
-            className="flex flex-col items-center p-3 rounded-xl bg-blue-50/70 hover:bg-blue-100/80 border border-blue-200 text-river-dark text-center transition group"
+            className="flex flex-col items-center p-3 rounded-xl bg-river/10 hover:bg-river/20 border border-river/25 text-river-dark text-center transition group active:scale-95 min-h-[72px] justify-center"
           >
             <Fish className="w-5 h-5 text-river mb-1 group-hover:scale-110 transition" />
             <span className="text-xs font-bold">{language === 'bn' ? 'পুকুর যোগ' : 'Add Pond'}</span>
@@ -143,15 +143,15 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({ onNavigate }) => {
 
           <button
             onClick={() => onNavigate('marketplace', 'sell')}
-            className="flex flex-col items-center p-3 rounded-xl bg-clay-light hover:bg-clay/20 border border-clay/30 text-clay-dark text-center transition group"
+            className="flex flex-col items-center p-3 rounded-xl bg-clay-light hover:bg-clay/20 border border-clay/30 text-clay-dark text-center transition group active:scale-95 min-h-[72px] justify-center"
           >
-            <ShoppingBag className="w-5 h-5 text-clay mb-1 group-hover:scale-110 transition" />
+            <ShoppingBag className="w-5 h-5 text-clay-dark mb-1 group-hover:scale-110 transition" />
             <span className="text-xs font-bold">{language === 'bn' ? 'পণ্য বিক্রি' : 'Sell Produce'}</span>
           </button>
 
           <button
             onClick={() => onNavigate('prices')}
-            className="flex flex-col items-center p-3 rounded-xl bg-harvest-light hover:bg-harvest/20 border border-harvest/30 text-harvest-dark text-center transition group"
+            className="flex flex-col items-center p-3 rounded-xl bg-harvest-light hover:bg-harvest/20 border border-harvest/30 text-harvest-dark text-center transition group active:scale-95 min-h-[72px] justify-center"
           >
             <TrendingUp className="w-5 h-5 text-harvest-dark mb-1 group-hover:scale-110 transition" />
             <span className="text-xs font-bold">{language === 'bn' ? 'বাজার দর' : 'Market Prices'}</span>
@@ -159,9 +159,9 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({ onNavigate }) => {
 
           <button
             onClick={() => onNavigate('experts')}
-            className="flex flex-col items-center p-3 rounded-xl bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-900 text-center transition group col-span-2 sm:col-span-1"
+            className="flex flex-col items-center p-3 rounded-xl bg-forest-light hover:bg-forest-light/80 border border-forest/20 text-forest-dark text-center transition group col-span-2 sm:col-span-1 active:scale-95 min-h-[72px] justify-center"
           >
-            <Sparkles className="w-5 h-5 text-purple-700 mb-1 group-hover:scale-110 transition" />
+            <Sparkles className="w-5 h-5 text-harvest-dark mb-1 group-hover:scale-110 transition" />
             <span className="text-xs font-bold">{language === 'bn' ? 'বিশেষজ্ঞ' : 'Find Expert'}</span>
           </button>
         </div>

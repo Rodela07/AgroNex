@@ -684,7 +684,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onClos
                 onClick={handleCompleteOnboarding}
                 className="inline-flex items-center space-x-2 px-6 py-2.5 rounded-xl bg-forest hover:bg-forest-dark text-white font-bold text-xs shadow-md transition"
               >
-                <Sparkles className="w-4 h-4 text-emerald-300" />
+                <Sparkles className="w-4 h-4 text-forest-leaf" />
                 <span>{language === 'bn' ? 'ড্যাশবোর্ড তৈরি সম্পন্ন করুন' : 'Generate Dashboard'}</span>
               </button>
             </div>

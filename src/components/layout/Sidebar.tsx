@@ -47,7 +47,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       labelBn: 'কৃষি ব্যবস্থাপনা',
       labelEn: 'Agriculture',
       icon: Sprout,
-      color: 'text-emerald-700',
+      color: 'text-forest-leaf',
       badge: null
     },
     {
@@ -55,7 +55,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       labelBn: 'পশু ও খামারি',
       labelEn: 'Livestock & Vet',
       icon: Beef,
-      color: 'text-amber-800',
+      color: 'text-clay',
       badge: null
     },
     {
@@ -63,7 +63,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       labelBn: 'মৎস্য চাষ',
       labelEn: 'Fisheries Hub',
       icon: Fish,
-      color: 'text-blue-700',
+      color: 'text-river',
       badge: null
     },
     {
@@ -71,7 +71,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       labelBn: 'কৃষি মার্কেটপ্লেস',
       labelEn: 'Direct Marketplace',
       icon: ShoppingBag,
-      color: 'text-clay',
+      color: 'text-clay-dark',
       badge: (pendingOffersCount + activeOrdersCount) > 0 ? `${pendingOffersCount + activeOrdersCount}` : null
     },
     {
@@ -87,7 +87,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       labelBn: 'বিশেষজ্ঞ নেটওয়ার্ক',
       labelEn: 'Expert Consultations',
       icon: Stethoscope,
-      color: 'text-forest-leaf',
+      color: 'text-forest',
       badge: null
     }
   ];
@@ -99,7 +99,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       labelBn: 'বিশেষজ্ঞ ড্যাশবোর্ড',
       labelEn: 'Doctor Workspace',
       icon: Stethoscope,
-      color: 'text-forest',
+      color: 'text-river-dark',
       badge: 'PRO'
     });
   }
@@ -110,7 +110,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     labelBn: 'অ্যাডমিন প্যানেল',
     labelEn: 'Admin Portal',
     icon: ShieldCheck,
-    color: 'text-purple-700',
+    color: 'text-forest-dark',
     badge: activeRole === 'admin' ? 'ADMIN' : null
   });
 
@@ -129,6 +129,26 @@ export const Sidebar: React.FC<SidebarProps> = ({
         collapsed ? 'w-20' : 'w-64'
       }`}
     >
+      {/* Sidebar Header with Interactive Logo */}
+      <div className={`p-4 border-b border-softBorder flex items-center ${collapsed ? 'justify-center' : 'justify-between'}`}>
+        <button
+          onClick={() => onSelectTab('dashboard')}
+          className="flex items-center space-x-2.5 text-left group focus:outline-none cursor-pointer"
+          title={language === 'bn' ? 'মূল ড্যাশবোর্ডে ফিরুন' : 'Return to Dashboard'}
+        >
+          <div className="w-8 h-8 rounded-xl bg-forest group-hover:bg-forest-dark flex items-center justify-center text-white shadow-xs transition-colors">
+            <Sprout className="w-4 h-4 text-forest-leaf group-hover:scale-105 transition-transform" />
+          </div>
+          {!collapsed && (
+            <div>
+              <span className="font-extrabold text-base tracking-tight text-forest-dark group-hover:text-forest transition-colors">
+                Agro<span className="text-forest-leaf">Nex</span>
+              </span>
+              <span className="block text-[9px] text-mutedText font-semibold">ডিজিটাল এগ্রো-ইকোসিস্টেম</span>
+            </div>
+          )}
+        </button>
+      </div>
       <div className="flex-1 py-4 px-3 space-y-1 overflow-y-auto">
         <div className="px-3 py-1 mb-2">
           {!collapsed && (

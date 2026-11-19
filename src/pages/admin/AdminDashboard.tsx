@@ -101,8 +101,8 @@ export const AdminDashboard: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-softBorder shadow-2xs">
         <div className="flex items-center space-x-3">
-          <span className="p-2.5 rounded-xl bg-purple-100 text-purple-900 border border-purple-200 shadow-2xs">
-            <ShieldCheck className="w-5 h-5 text-purple-700" />
+          <span className="p-2.5 rounded-xl bg-forest-50 text-forest-dark border border-forest/20 shadow-2xs">
+            <ShieldCheck className="w-5 h-5 text-forest" />
           </span>
           <div>
             <h1 className="text-xl font-bold text-forest-dark">
@@ -116,7 +116,7 @@ export const AdminDashboard: React.FC = () => {
           </div>
         </div>
 
-        <span className="px-3 py-1.5 text-xs font-bold rounded-full bg-purple-100 text-purple-900 border border-purple-200 self-start sm:self-auto">
+        <span className="px-3 py-1.5 text-xs font-bold rounded-full bg-forest-50 text-forest-dark border border-forest/20 self-start sm:self-auto">
           Super Admin Privileges
         </span>
       </div>
@@ -132,8 +132,8 @@ export const AdminDashboard: React.FC = () => {
               onClick={() => setAdminTab(tab.id as any)}
               className={`subtab-pill ${
                 isActive 
-                  ? 'bg-purple-900 text-white shadow-xs' 
-                  : 'bg-white text-secondaryText hover:text-purple-900 hover:bg-purple-50'
+                  ? 'bg-forest text-white shadow-xs' 
+                  : 'bg-white text-secondaryText hover:text-forest-dark hover:bg-forest-50'
               }`}
             >
               <Icon className="w-3.5 h-3.5 shrink-0" />
@@ -150,12 +150,12 @@ export const AdminDashboard: React.FC = () => {
             <div className="card-premium p-4.5">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-secondaryText font-medium">নিবন্ধিত কৃষিজীবী ও ব্যবসায়ী</span>
-                <Users className="w-4 h-4 text-purple-700/60" />
+                <Users className="w-4 h-4 text-river" />
               </div>
               <p className="text-2xl font-black text-forest-dark mt-2">
                 ১২,৪৫০+
               </p>
-              <p className="text-[11px] text-emerald-700 font-semibold mt-1">
+              <p className="text-[11px] text-forest-leaf font-semibold mt-1">
                 উত্তরবঙ্গ ও ময়মনসিংহ ক্লাস্টার
               </p>
             </div>
@@ -181,7 +181,7 @@ export const AdminDashboard: React.FC = () => {
               <p className="text-2xl font-black text-forest mt-2">
                 ৳ {toBengaliDigits(orders.reduce((acc, o) => acc + o.totalOrderValue, 0))}
               </p>
-              <p className="text-[11px] text-emerald-700 font-semibold mt-1">
+              <p className="text-[11px] text-forest-leaf font-semibold mt-1">
                 {toBengaliDigits(orders.length)} টি সফল ডিল সম্পন্ন
               </p>
             </div>
@@ -189,9 +189,9 @@ export const AdminDashboard: React.FC = () => {
             <div className="card-premium p-4.5">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-secondaryText font-medium">ভেরিফাইড বিশেষজ্ঞ নেটওয়ার্ক</span>
-                <ShieldCheck className="w-4 h-4 text-purple-700/60" />
+                <ShieldCheck className="w-4 h-4 text-forest" />
               </div>
-              <p className="text-2xl font-black text-purple-900 mt-2">
+              <p className="text-2xl font-black text-forest-dark mt-2">
                 {toBengaliDigits(verifiedExpertIds.length)} <span className="text-sm font-semibold text-secondaryText">জন</span>
               </p>
               <p className="text-[11px] text-mutedText mt-1">
@@ -229,9 +229,49 @@ export const AdminDashboard: React.FC = () => {
 
       {/* TAB 2: EXPERT VERIFICATION */}
       {adminTab === 'experts' && (
-        <div className="card-premium p-5 space-y-4">
+        <div className="card-premium p-4 sm:p-5 space-y-4">
           <h3 className="text-sm font-bold text-forest-dark">কৃষি, পশু ও মৎস্য বিশেষজ্ঞ সনদপত্র যাচাই ও অনুমোদন</h3>
-          <div className="overflow-x-auto">
+          
+          {/* Mobile Expert Cards (sm:hidden) */}
+          <div className="sm:hidden space-y-3">
+            {experts.map((exp) => {
+              const isVerified = verifiedExpertIds.includes(exp.id);
+              return (
+                <div key={exp.id} className="p-3.5 rounded-xl border border-softBorder bg-warmWhite space-y-2 text-xs">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <h4 className="font-bold text-forest-dark text-sm">{exp.nameBn}</h4>
+                      <p className="text-[11px] text-mutedText">{exp.designationBn} ({exp.qualification})</p>
+                    </div>
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold shrink-0 ${
+                      isVerified ? 'bg-emerald-100 text-status-success' : 'bg-amber-100 text-status-warning'
+                    }`}>
+                      {isVerified ? '✓ ভেরিফাইড' : 'অপেক্ষমাণ'}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between text-[11px] text-secondaryText pt-1 border-t border-softBorder">
+                    <span>বিভাগ: <strong className="uppercase text-forest">{exp.category}</strong></span>
+                    <span>অভিজ্ঞতা: {toBengaliDigits(exp.experienceYears)} বছর</span>
+                  </div>
+
+                  <div className="pt-2 flex justify-end">
+                    <button
+                      onClick={() => toggleExpertVerification(exp.id)}
+                      className={`w-full py-2 rounded-xl text-xs font-bold transition active:scale-95 ${
+                        isVerified ? 'bg-red-50 text-status-error border border-red-200' : 'btn-primary'
+                      }`}
+                    >
+                      {isVerified ? 'সনদ বাতিল করুন' : 'সনদপত্র অনুমোদন দিন'}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Desktop Table View (hidden sm:block) */}
+          <div className="hidden sm:block overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead>
                 <tr className="bg-rice border-y border-softBorder text-secondaryText">

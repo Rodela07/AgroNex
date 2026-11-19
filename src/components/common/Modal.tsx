@@ -53,27 +53,28 @@ export const Modal: React.FC<ModalProps> = ({
       />
 
       {/* Modal Container */}
-      <div className="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+      <div className="flex min-h-full items-center justify-center p-3 text-center sm:p-4">
         <div 
-          className={`relative transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all sm:my-8 w-full ${maxWidthClasses[maxWidth]} border border-softBorder`}
+          className={`relative transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all my-4 sm:my-8 w-full ${maxWidthClasses[maxWidth]} border border-softBorder max-h-[92vh] flex flex-col`}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-softBorder px-6 py-4 bg-warmWhite">
-            <div>
-              <h3 className="text-lg font-bold text-forest-dark">{title}</h3>
-              {subtitle && <p className="text-xs text-secondaryText mt-0.5">{subtitle}</p>}
+          <div className="flex items-center justify-between border-b border-softBorder px-4 py-3.5 sm:px-6 sm:py-4 bg-warmWhite shrink-0">
+            <div className="pr-2">
+              <h3 className="text-base sm:text-lg font-bold text-forest-dark break-words">{title}</h3>
+              {subtitle && <p className="text-xs text-secondaryText mt-0.5 break-words">{subtitle}</p>}
             </div>
             <button
               onClick={onClose}
-              className="rounded-lg p-1.5 text-mutedText hover:bg-rice hover:text-primaryText transition-colors"
+              className="rounded-xl p-2 text-mutedText hover:bg-rice hover:text-primaryText transition-colors min-h-[40px] min-w-[40px] flex items-center justify-center shrink-0 active:scale-95"
+              aria-label="Close dialog"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
 
           {/* Content */}
-          <div className="px-6 py-5 max-h-[80vh] overflow-y-auto">
+          <div className="px-4 py-4 sm:px-6 sm:py-5 overflow-y-auto flex-1">
             {children}
           </div>
         </div>
