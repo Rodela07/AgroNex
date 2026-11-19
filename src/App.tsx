@@ -6,6 +6,7 @@ import { MobileNav } from './components/layout/MobileNav';
 import { ToastContainer } from './components/common/ToastContainer';
 import { Phase2Modal } from './components/roadmap/Phase2Modal';
 import { OnboardingModal } from './pages/auth/OnboardingModal';
+import { LoginPage } from './pages/auth/LoginPage';
 
 // Pages
 import { HomeDashboard } from './pages/dashboard/HomeDashboard';
@@ -20,7 +21,7 @@ import { AdminDashboard } from './pages/admin/AdminDashboard';
 import { ProfilePage } from './pages/profile/ProfilePage';
 
 export const App: React.FC = () => {
-  const { isOffline, language } = useApp();
+  const { isOffline, language, isAuthenticated } = useApp();
 
   const [currentTab, setCurrentTab] = useState<string>('dashboard');
   const [currentSubTab, setCurrentSubTab] = useState<string>('overview');
@@ -38,6 +39,21 @@ export const App: React.FC = () => {
     setMobileDrawerOpen(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  // If unauthenticated or user navigated to login portal
+  if (!isAuthenticated || currentTab === 'login') {
+    return (
+      <div className="min-h-screen bg-rice flex flex-col font-sans selection:bg-forest/20 selection:text-forest-dark antialiased">
+        <LoginPage
+          onSuccess={() => handleNavigate('dashboard')}
+          onOpenRegister={() => setShowOnboarding(true)}
+          onExploreAsGuest={() => handleNavigate('dashboard')}
+        />
+        <OnboardingModal isOpen={showOnboarding} onClose={() => setShowOnboarding(false)} />
+        <ToastContainer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-rice flex flex-col font-sans selection:bg-forest/20 selection:text-forest-dark antialiased">
@@ -77,7 +93,7 @@ export const App: React.FC = () => {
           {currentTab === 'experts' && <ExpertsHub />}
           {currentTab === 'expert_dashboard' && <ExpertDashboard />}
           {currentTab === 'admin' && <AdminDashboard />}
-          {currentTab === 'profile' && <ProfilePage />}
+          {currentTab === 'profile' && <ProfilePage onNavigate={handleNavigate} />}
         </main>
       </div>
 

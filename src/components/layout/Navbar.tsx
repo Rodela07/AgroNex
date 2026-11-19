@@ -17,7 +17,10 @@ import {
   RotateCcw,
   Sparkles,
   Menu,
-  ChevronDown
+  ChevronDown,
+  LogOut,
+  LogIn,
+  User
 } from 'lucide-react';
 import { UserRole } from '../../types';
 
@@ -39,11 +42,14 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMobileMenu, onSelectTab })
     isOffline,
     setIsOffline,
     setShowPhase2Modal,
-    resetAllData
+    resetAllData,
+    isAuthenticated,
+    logout
   } = useApp();
 
   const [showRoleMenu, setShowRoleMenu] = useState(false);
   const [showNotifMenu, setShowNotifMenu] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
@@ -296,6 +302,75 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMobileMenu, onSelectTab })
           >
             <RotateCcw className="w-4 h-4" />
           </button>
+
+          {/* User Account & Login Portal Menu */}
+          {isAuthenticated ? (
+            <div className="relative">
+              <button
+                onClick={() => setShowUserMenu(!showUserMenu)}
+                className="flex items-center space-x-1.5 p-1 sm:px-2.5 sm:py-1 rounded-xl bg-rice border border-softBorder hover:border-forest/40 transition text-xs cursor-pointer"
+                title="Account & Portal"
+              >
+                <img
+                  src={user.avatar}
+                  alt={user.name}
+                  className="w-7 h-7 rounded-lg object-cover border border-forest/20 shrink-0"
+                />
+                <span className="hidden xl:inline-block font-bold text-forest-dark max-w-[100px] truncate">
+                  {user.name.split(' ')[0]}
+                </span>
+                <ChevronDown className="w-3 h-3 text-mutedText hidden sm:block" />
+              </button>
+
+              {showUserMenu && (
+                <div
+                  className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-softBorder p-2 z-50 animate-in fade-in zoom-in-95 duration-100"
+                  onClick={() => setShowUserMenu(false)}
+                >
+                  <div className="px-3 py-2 border-b border-softBorder mb-1">
+                    <p className="text-xs font-bold text-forest-dark truncate">{user.name}</p>
+                    <p className="text-[11px] text-secondaryText truncate">{user.phone}</p>
+                  </div>
+
+                  <div className="space-y-1 text-xs">
+                    <button
+                      onClick={() => onSelectTab && onSelectTab('profile')}
+                      className="w-full flex items-center space-x-2 px-3 py-2 rounded-xl text-left hover:bg-rice text-primaryText transition cursor-pointer"
+                    >
+                      <User className="w-4 h-4 text-forest" />
+                      <span>{language === 'bn' ? 'প্রোফাইল সেটিংস' : 'Profile Settings'}</span>
+                    </button>
+
+                    <button
+                      onClick={() => onSelectTab && onSelectTab('login')}
+                      className="w-full flex items-center space-x-2 px-3 py-2 rounded-xl text-left hover:bg-forest-50 text-forest-dark font-medium transition cursor-pointer"
+                    >
+                      <LogIn className="w-4 h-4 text-forest" />
+                      <span>{language === 'bn' ? 'লগইন পোর্টাল / অ্যাকাউন্ট পরিবর্তন' : 'Login Portal / Switch'}</span>
+                    </button>
+
+                    <div className="pt-1 border-t border-softBorder">
+                      <button
+                        onClick={() => logout()}
+                        className="w-full flex items-center space-x-2 px-3 py-2 rounded-xl text-left hover:bg-red-50 text-status-error font-medium transition cursor-pointer"
+                      >
+                        <LogOut className="w-4 h-4 text-status-error" />
+                        <span>{language === 'bn' ? 'লগ আউট (Sign Out)' : 'Sign Out'}</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <button
+              onClick={() => onSelectTab && onSelectTab('login')}
+              className="btn-primary text-xs py-1.5 px-3 flex items-center space-x-1 cursor-pointer"
+            >
+              <LogIn className="w-3.5 h-3.5" />
+              <span>{language === 'bn' ? 'লগইন' : 'Sign In'}</span>
+            </button>
+          )}
         </div>
 
       </div>

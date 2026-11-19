@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import { 
   User, 
@@ -13,18 +12,23 @@ import {
   ShoppingBag, 
   Check, 
   Save, 
-  Trash2,
-  Lock,
-  Globe,
-  Sparkles,
-  ArrowRight
+  Trash2, 
+  Lock, 
+  Globe, 
+  Sparkles, 
+  ArrowRight, 
+  LogIn, 
+  LogOut 
 } from 'lucide-react';
 import { UserRole, SectorType } from '../../types';
 import { BANGLADESH_DISTRICTS } from '../../data/bangladeshGeo';
 import { toBengaliDigits } from '../../utils/formatters';
 
-export const ProfilePage: React.FC = () => {
-  const navigate = useNavigate();
+interface ProfilePageProps {
+  onNavigate?: (tab: string, subtab?: string) => void;
+}
+
+export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
   const { 
     language, 
     setLanguage, 
@@ -35,7 +39,8 @@ export const ProfilePage: React.FC = () => {
     ponds, 
     listings, 
     orders, 
-    showToast 
+    showToast,
+    logout
   } = useApp();
 
   const [name, setName] = useState(user.name);
@@ -124,8 +129,8 @@ export const ProfilePage: React.FC = () => {
       {/* Asset Quick Summary Shortcuts */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <button 
-          onClick={() => navigate('/agriculture')}
-          className="card-premium p-3.5 text-center hover:border-forest transition group"
+          onClick={() => onNavigate && onNavigate('agriculture')}
+          className="card-premium p-3.5 text-center hover:border-forest transition group cursor-pointer"
         >
           <div className="flex items-center justify-center space-x-1 text-forest mb-1">
             <Sprout className="w-4 h-4" />
@@ -138,8 +143,8 @@ export const ProfilePage: React.FC = () => {
         </button>
 
         <button 
-          onClick={() => navigate('/livestock')}
-          className="card-premium p-3.5 text-center hover:border-amber-900 transition group"
+          onClick={() => onNavigate && onNavigate('livestock')}
+          className="card-premium p-3.5 text-center hover:border-amber-900 transition group cursor-pointer"
         >
           <div className="flex items-center justify-center space-x-1 text-amber-900 mb-1">
             <Beef className="w-4 h-4" />
@@ -152,8 +157,8 @@ export const ProfilePage: React.FC = () => {
         </button>
 
         <button 
-          onClick={() => navigate('/fisheries')}
-          className="card-premium p-3.5 text-center hover:border-river transition group"
+          onClick={() => onNavigate && onNavigate('fisheries')}
+          className="card-premium p-3.5 text-center hover:border-river transition group cursor-pointer"
         >
           <div className="flex items-center justify-center space-x-1 text-river mb-1">
             <Fish className="w-4 h-4" />
@@ -166,8 +171,8 @@ export const ProfilePage: React.FC = () => {
         </button>
 
         <button 
-          onClick={() => navigate('/marketplace')}
-          className="card-premium p-3.5 text-center hover:border-clay transition group"
+          onClick={() => onNavigate && onNavigate('marketplace')}
+          className="card-premium p-3.5 text-center hover:border-clay transition group cursor-pointer"
         >
           <div className="flex items-center justify-center space-x-1 text-clay mb-1">
             <ShoppingBag className="w-4 h-4" />
@@ -372,6 +377,39 @@ export const ProfilePage: React.FC = () => {
         </div>
 
       </form>
+
+      {/* Account Session & Portal Management */}
+      <div className="card-premium p-5 flex flex-col sm:flex-row items-center justify-between gap-4 border border-softBorder">
+        <div>
+          <h4 className="text-sm font-bold text-forest-dark">
+            {language === 'bn' ? 'অ্যাকাউন্ট ও সেশন নিয়ন্ত্রণ' : 'Account & Session Management'}
+          </h4>
+          <p className="text-xs text-secondaryText mt-0.5">
+            {language === 'bn' 
+              ? 'লগইন পোর্টাল থেকে সরাসরি অন্য ডেমো রোল নির্বাচন করতে পারেন অথবা বর্তমান সেশন শেষ করতে পারেন।' 
+              : 'Switch to another demo persona or end your active session from the login portal.'}
+          </p>
+        </div>
+
+        <div className="flex items-center space-x-2 w-full sm:w-auto">
+          <button
+            type="button"
+            onClick={() => onNavigate && onNavigate('login')}
+            className="btn-secondary text-xs flex-1 sm:flex-initial flex items-center justify-center space-x-1.5 py-2 px-3.5 cursor-pointer"
+          >
+            <LogIn className="w-4 h-4 text-forest" />
+            <span>{language === 'bn' ? 'লগইন পোর্টাল' : 'Login Portal'}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => logout()}
+            className="px-3.5 py-2 rounded-xl text-xs font-semibold bg-red-50 hover:bg-red-100 text-status-error border border-red-200 transition flex items-center justify-center space-x-1.5 cursor-pointer flex-1 sm:flex-initial"
+          >
+            <LogOut className="w-4 h-4 text-status-error" />
+            <span>{language === 'bn' ? 'লগ আউট' : 'Sign Out'}</span>
+          </button>
+        </div>
+      </div>
 
     </div>
   );

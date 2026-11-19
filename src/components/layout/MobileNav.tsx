@@ -18,7 +18,9 @@ import {
   Wifi,
   WifiOff,
   RotateCcw,
-  Globe
+  Globe,
+  LogIn,
+  LogOut
 } from 'lucide-react';
 
 interface MobileNavProps {
@@ -44,7 +46,8 @@ export const MobileNav: React.FC<MobileNavProps> = ({
     isOffline,
     setIsOffline,
     resetAllData,
-    setShowPhase2Modal 
+    setShowPhase2Modal,
+    logout
   } = useApp();
   
   const [internalDrawerOpen, setInternalDrawerOpen] = useState(false);
@@ -239,6 +242,16 @@ export const MobileNav: React.FC<MobileNavProps> = ({
                     <User className="w-4 h-4 text-secondaryText shrink-0" />
                     <span>{language === 'bn' ? 'প্রোফাইল ও বহুবিধ রোল সেটিংস' : 'Profile & Settings'}</span>
                   </button>
+
+                  <button
+                    onClick={() => handleNav('login')}
+                    className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-bold text-left transition min-h-[44px] ${
+                      currentTab === 'login' ? 'bg-forest text-white' : 'text-primaryText hover:bg-rice active:bg-rice'
+                    }`}
+                  >
+                    <LogIn className="w-4 h-4 text-forest shrink-0" />
+                    <span>{language === 'bn' ? 'লগইন ও রোল পোর্টাল' : 'Login Portal'}</span>
+                  </button>
                 </div>
 
                 {/* Mobile Drawer Utilities */}
@@ -275,6 +288,17 @@ export const MobileNav: React.FC<MobileNavProps> = ({
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isOffline ? 'bg-amber-100 text-status-warning' : 'bg-emerald-100 text-status-success'}`}>
                       {isOffline ? 'ON' : 'OFF'}
                     </span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      logout();
+                      setDrawerOpen(false);
+                    }}
+                    className="w-full flex items-center space-x-2 px-3 py-2 rounded-xl bg-red-50 hover:bg-red-100 text-xs font-semibold text-status-error transition cursor-pointer"
+                  >
+                    <LogOut className="w-4 h-4 text-status-error" />
+                    <span>{language === 'bn' ? 'লগ আউট (Sign Out)' : 'Sign Out'}</span>
                   </button>
                 </div>
               </div>

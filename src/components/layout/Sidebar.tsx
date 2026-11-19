@@ -13,7 +13,9 @@ import {
   Sparkles,
   ChevronRight,
   CalendarCheck,
-  CheckCircle2
+  CheckCircle2,
+  LogIn,
+  LogOut
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -28,7 +30,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onSelectTab,
   collapsed
 }) => {
-  const { language, activeRole, inquiries, orders, reminders } = useApp();
+  const { language, activeRole, inquiries, orders, reminders, user, logout } = useApp();
 
   const pendingOffersCount = inquiries.filter(i => i.status === 'pending' || i.status === 'countered').length;
   const activeOrdersCount = orders.filter(o => o.status === 'accepted' || o.status === 'ready_for_pickup').length;
@@ -123,6 +125,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
     badge: null
   });
 
+  navItems.push({
+    id: 'login',
+    labelBn: 'লগইন ও রোল পোর্টাল',
+    labelEn: 'Login Portal',
+    icon: LogIn,
+    color: 'text-forest',
+    badge: null
+  });
+
   return (
     <aside 
       className={`hidden md:flex flex-col bg-white border-r border-softBorder transition-all duration-200 select-none ${
@@ -212,6 +223,39 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </p>
         </div>
       )}
+
+      {/* User Session Bar */}
+      <div className={`p-3 border-t border-softBorder flex items-center ${collapsed ? 'justify-center' : 'justify-between'} bg-warmWhite`}>
+        <button
+          onClick={() => onSelectTab('profile')}
+          className="flex items-center space-x-2.5 text-left min-w-0 group cursor-pointer"
+          title="Go to profile"
+        >
+          <img
+            src={user.avatar}
+            alt={user.name}
+            className="w-8 h-8 rounded-xl object-cover border border-forest/20 shrink-0"
+          />
+          {!collapsed && (
+            <div className="truncate">
+              <p className="text-xs font-bold text-forest-dark group-hover:text-forest truncate">
+                {user.name.split(' ')[0]}
+              </p>
+              <p className="text-[10px] text-mutedText truncate">{user.district}</p>
+            </div>
+          )}
+        </button>
+
+        {!collapsed && (
+          <button
+            onClick={() => logout()}
+            className="p-1.5 text-mutedText hover:text-status-error hover:bg-red-50 rounded-lg transition cursor-pointer"
+            title={language === 'bn' ? 'লগ আউট করুন' : 'Sign out'}
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
+        )}
+      </div>
     </aside>
   );
 };

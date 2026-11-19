@@ -42,6 +42,7 @@ import {
   INITIAL_NOTIFICATIONS, 
   INITIAL_REMINDERS 
 } from '../data/mockData';
+import { DEMO_PERSONAS } from '../data/demoPersonas';
 
 export interface ToastMessage {
   id: string;
@@ -60,6 +61,14 @@ interface AppContextType {
   setActiveRole: (role: UserRole) => void;
   isOffline: boolean;
   setIsOffline: (val: boolean) => void;
+
+  // Auth & Session
+  isAuthenticated: boolean;
+  login: (userProfile: UserProfile) => void;
+  loginWithPhoneOtp: (phone: string, otp: string) => Promise<boolean>;
+  loginWithPassword: (identifier: string, password: string) => Promise<boolean>;
+  loginAsPersona: (personaId: string) => void;
+  logout: () => void;
 
   // Toast System
   toasts: ToastMessage[];
@@ -177,6 +186,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [language, setLanguageState] = useState<Language>(() => getStoredItem('lang', 'bn'));
   const [user, setUserState] = useState<UserProfile>(() => getStoredItem('user', INITIAL_USER));
   const [activeRole, setActiveRoleState] = useState<UserRole>(() => getStoredItem('role', 'agri_farmer'));
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => getStoredItem('is_auth', true));
   const [isOffline, setIsOffline] = useState<boolean>(false);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [showPhase2Modal, setShowPhase2Modal] = useState<boolean>(false);
@@ -208,6 +218,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => { saveStoredItem('lang', language); }, [language]);
   useEffect(() => { saveStoredItem('user', user); }, [user]);
   useEffect(() => { saveStoredItem('role', activeRole); }, [activeRole]);
+  useEffect(() => { saveStoredItem('is_auth', isAuthenticated); }, [isAuthenticated]);
   useEffect(() => { saveStoredItem('lands', lands); }, [lands]);
   useEffect(() => { saveStoredItem('fertilizers', fertilizerPlans); }, [fertilizerPlans]);
   useEffect(() => { saveStoredItem('livestock', livestockFarms); }, [livestockFarms]);
@@ -252,6 +263,82 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const setActiveRole = (role: UserRole) => {
     setActiveRoleState(role);
     showToast(language === 'bn' ? `রোল পরিবর্তিত হয়েছে: ${role}` : `Role switched to: ${role}`, 'info');
+  };
+
+  // Auth & Session methods
+  const login = (userProfile: UserProfile) => {
+    setUserState(userProfile);
+    if (userProfile.roles.length > 0) {
+      setActiveRoleState(userProfile.roles[0]);
+    }
+    setIsAuthenticated(true);
+    showToast(
+      language === 'bn' ? `স্বাগতম, ${userProfile.name}!` : `Welcome, ${userProfile.name}!`,
+      'success',
+      language === 'bn' ? 'লগইন সফল হয়েছে।' : 'Login successful.'
+    );
+  };
+
+  const loginWithPhoneOtp = async (phone: string, otp: string): Promise<boolean> => {
+    if (otp === '123456' || otp.length === 6) {
+      const matched = DEMO_PERSONAS.find(p => p.phone === phone);
+      if (matched) {
+        login(matched.profile);
+      } else {
+        const customUser: UserProfile = {
+          ...INITIAL_USER,
+          phone,
+          name: `কৃষক সদস্য (${phone.slice(-4)})`,
+          id: `usr_${Date.now()}`
+        };
+        login(customUser);
+      }
+      return true;
+    }
+    showToast(
+      language === 'bn' ? 'ভুল ওটিপি কোড' : 'Invalid OTP code',
+      'error',
+      language === 'bn' ? 'সঠিক ৬-সংখ্যার ওটিপি কোড লিখুন (ডেমো কোড: 123456)' : 'Enter valid 6-digit code (Demo code: 123456)'
+    );
+    return false;
+  };
+
+  const loginWithPassword = async (identifier: string, password: string): Promise<boolean> => {
+    if (password.length >= 4) {
+      const matched = DEMO_PERSONAS.find(p => p.phone === identifier || p.profile.email === identifier);
+      if (matched) {
+        login(matched.profile);
+      } else {
+        login({
+          ...INITIAL_USER,
+          phone: identifier.includes('@') ? INITIAL_USER.phone : identifier,
+          email: identifier.includes('@') ? identifier : INITIAL_USER.email
+        });
+      }
+      return true;
+    }
+    showToast(
+      language === 'bn' ? 'লগইন ব্যর্থ' : 'Login failed',
+      'error',
+      language === 'bn' ? 'পাসওয়ার্ড ন্যূনতম ৪ অক্ষরের হতে হবে।' : 'Password must be at least 4 characters.'
+    );
+    return false;
+  };
+
+  const loginAsPersona = (personaId: string) => {
+    const found = DEMO_PERSONAS.find(p => p.id === personaId);
+    if (found) {
+      login(found.profile);
+    }
+  };
+
+  const logout = () => {
+    setIsAuthenticated(false);
+    showToast(
+      language === 'bn' ? 'লগ আউট সম্পন্ন' : 'Logged out',
+      'info',
+      language === 'bn' ? 'আপনার সেশন সমাপ্ত হয়েছে। পুনরায় প্রবেশ করতে লগইন করুন।' : 'Your session has ended.'
+    );
   };
 
   // Agriculture actions
@@ -728,6 +815,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setActiveRole,
         isOffline,
         setIsOffline,
+        isAuthenticated,
+        login,
+        loginWithPhoneOtp,
+        loginWithPassword,
+        loginAsPersona,
+        logout,
         toasts,
         showToast,
         dismissToast,
