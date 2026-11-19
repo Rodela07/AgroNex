@@ -1,0 +1,59 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-primary: #174C3C;
+  --color-dark: #10372F;
+  --color-leaf: #6E9B58;
+  --color-rice: #F7F5EC;
+  --color-warm-white: #FFFDF7;
+  --color-clay: #C56B45;
+  --color-harvest: #D6A84B;
+  --color-river: #5A7F91;
+  --color-text-primary: #24332D;
+  --color-text-secondary: #66736B;
+  --color-text-muted: #89948B;
+  --color-border: #E4E7DC;
+}
+
+body {
+  margin: 0;
+  font-family: 'Hind Siliguri', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: #24332D;
+  background-color: #F7F5EC;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #F2EFE4;
+}
+::-webkit-scrollbar-thumb {
+  background: #C8D1C7;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #A0B09E;
+}
+
+/* Utility printing for digital receipt */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #printable-receipt, #printable-receipt * {
+    visibility: visible;
+  }
+  #printable-receipt {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+}

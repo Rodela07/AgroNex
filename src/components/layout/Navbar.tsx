@@ -1,0 +1,255 @@
+import React, { useState } from 'react';
+import { useApp } from '../../context/AppContext';
+import { 
+  Bell, 
+  MapPin, 
+  Globe, 
+  UserCheck, 
+  Check, 
+  Sprout, 
+  Wifi, 
+  WifiOff, 
+  Layers, 
+  RotateCcw,
+  Sparkles
+} from 'lucide-react';
+import { UserRole } from '../../types';
+
+export const Navbar: React.FC<{ onOpenMobileMenu: () => void }> = () => {
+  const { 
+    language, 
+    setLanguage, 
+    user, 
+    activeRole, 
+    setActiveRole, 
+    notifications, 
+    markAllNotificationsRead,
+    isOffline,
+    setIsOffline,
+    setShowPhase2Modal,
+    resetAllData
+  } = useApp();
+
+  const [showRoleMenu, setShowRoleMenu] = useState(false);
+  const [showNotifMenu, setShowNotifMenu] = useState(false);
+
+  const unreadCount = notifications.filter(n => !n.isRead).length;
+
+  const rolesList: { role: UserRole; labelBn: string; labelEn: string; icon: string }[] = [
+    { role: 'agri_farmer', labelBn: 'কৃষি কৃষক (Agri Farmer)', labelEn: 'Agri Farmer', icon: '🌾' },
+    { role: 'livestock_farmer', labelBn: 'পশুপালক / খামারি', labelEn: 'Livestock Farmer', icon: '🐄' },
+    { role: 'fish_farmer', labelBn: 'মৎস্য চাষী (Fish Farmer)', labelEn: 'Fish Farmer', icon: '🐟' },
+    { role: 'marketplace_seller', labelBn: 'মার্কেটপ্লেস বিক্রেতা (Seller)', labelEn: 'Marketplace Seller', icon: '🏪' },
+    { role: 'wholesale_buyer', labelBn: 'পাইকারি ক্রেতা / আড়তদার', labelEn: 'Wholesale Buyer / Aratdar', icon: '🚛' },
+    { role: 'agri_expert', labelBn: 'কৃষি / পশু বিশেষজ্ঞ (Expert)', labelEn: 'Agri / Vet Expert', icon: '👨‍⚕️' },
+    { role: 'admin', labelBn: 'সিস্টেম অ্যাডমিন (Admin)', labelEn: 'Platform Admin', icon: '⚙️' }
+  ];
+
+  return (
+    <header className="sticky top-0 z-40 bg-white border-b border-softBorder shadow-sm px-4 lg:px-8 py-3">
+      <div className="flex items-center justify-between">
+        
+        {/* Left: Branding & Location */}
+        <div className="flex items-center space-x-3 lg:space-x-6">
+          <div className="flex items-center space-x-2.5">
+            <div className="w-10 h-10 rounded-xl bg-forest flex items-center justify-center text-white shadow-md">
+              <Sprout className="w-6 h-6 text-emerald-300" />
+            </div>
+            <div>
+              <div className="flex items-center space-x-2">
+                <span className="font-extrabold text-xl tracking-tight text-forest-dark">Agro<span className="text-forest-leaf">Nex</span></span>
+                <span className="hidden sm:inline-block px-2 py-0.5 text-[10px] font-bold bg-forest-light text-forest rounded-full border border-forest/20">
+                  BD v2.0
+                </span>
+              </div>
+              <p className="text-[11px] text-secondaryText hidden md:block">
+                {language === 'bn' ? 'সমন্বিত এগ্রো-টেক ও ডিরেক্ট মার্কেটপ্লেস' : 'Integrated Agro-Tech & Direct Marketplace'}
+              </p>
+            </div>
+          </div>
+
+          {/* Location Badge */}
+          <div className="hidden sm:flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-rice border border-softBorder text-xs text-primaryText">
+            <MapPin className="w-3.5 h-3.5 text-clay" />
+            <span className="font-medium">{user.district}, {user.upazila}</span>
+          </div>
+        </div>
+
+        {/* Right Actions */}
+        <div className="flex items-center space-x-2 sm:space-x-3">
+
+          {/* Phase 2 Roadmap shortcut button */}
+          <button
+            onClick={() => setShowPhase2Modal(true)}
+            className="hidden md:inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-forest/10 to-harvest/20 hover:from-forest/20 hover:to-harvest/30 text-xs font-semibold text-forest-dark border border-forest/20 transition shadow-xs"
+            title="View Phase 2 Roadmap & Upcoming Technologies"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-harvest-dark" />
+            <span>{language === 'bn' ? 'পরবর্তী ধাপ (Phase 2)' : 'Phase 2 Features'}</span>
+          </button>
+
+          {/* Offline indicator toggle */}
+          <button
+            onClick={() => setIsOffline(!isOffline)}
+            className={`hidden lg:flex items-center space-x-1 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition ${
+              isOffline ? 'bg-amber-50 text-status-warning border-amber-300' : 'bg-emerald-50 text-status-success border-emerald-200'
+            }`}
+            title="Toggle simulated offline mode"
+          >
+            {isOffline ? <WifiOff className="w-3.5 h-3.5" /> : <Wifi className="w-3.5 h-3.5" />}
+            <span>{isOffline ? (language === 'bn' ? 'অফলাইন মোড' : 'Offline Mode') : (language === 'bn' ? 'অনলাইন' : 'Online')}</span>
+          </button>
+
+          {/* Language Switcher */}
+          <div className="flex items-center border border-softBorder rounded-xl bg-rice p-0.5">
+            <button
+              onClick={() => setLanguage('bn')}
+              className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition ${
+                language === 'bn' ? 'bg-forest text-white shadow-xs' : 'text-secondaryText hover:text-primaryText'
+              }`}
+            >
+              বাংলা
+            </button>
+            <button
+              onClick={() => setLanguage('en')}
+              className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition ${
+                language === 'en' ? 'bg-forest text-white shadow-xs' : 'text-secondaryText hover:text-primaryText'
+              }`}
+            >
+              EN
+            </button>
+          </div>
+
+          {/* Role Switcher Menu */}
+          <div className="relative">
+            <button
+              onClick={() => setShowRoleMenu(!showRoleMenu)}
+              className="flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-warmWhite border border-softBorder hover:border-forest/40 text-xs font-medium text-primaryText transition shadow-2xs"
+            >
+              <UserCheck className="w-4 h-4 text-forest" />
+              <span className="hidden md:inline font-semibold">
+                {language === 'bn' ? 'রোল:' : 'Role:'}
+              </span>
+              <span className="font-bold text-forest-dark max-w-[110px] truncate">
+                {rolesList.find(r => r.role === activeRole)?.labelEn || activeRole}
+              </span>
+            </button>
+
+            {showRoleMenu && (
+              <div 
+                className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-softBorder p-2 z-50 animate-in fade-in zoom-in-95 duration-100"
+                onClick={() => setShowRoleMenu(false)}
+              >
+                <div className="px-3 py-2 border-b border-softBorder mb-1">
+                  <p className="text-xs font-bold text-forest-dark">
+                    {language === 'bn' ? 'রোল / দৃষ্টিভঙ্গি পরিবর্তন করুন' : 'Switch Role & Perspective'}
+                  </p>
+                  <p className="text-[11px] text-mutedText">
+                    {language === 'bn' ? 'প্ল্যাটফর্ম আপনার রোল অনুযায়ী ড্যাশবোর্ড আপডেট করবে' : 'Interface will adapt to this role'}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  {rolesList.map((item) => (
+                    <button
+                      key={item.role}
+                      onClick={() => setActiveRole(item.role)}
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-left text-xs transition ${
+                        activeRole === item.role ? 'bg-forest/10 text-forest-dark font-bold' : 'hover:bg-rice text-primaryText'
+                      }`}
+                    >
+                      <span className="flex items-center space-x-2">
+                        <span>{item.icon}</span>
+                        <span>{language === 'bn' ? item.labelBn : item.labelEn}</span>
+                      </span>
+                      {activeRole === item.role && <Check className="w-4 h-4 text-forest" />}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Notification Center */}
+          <div className="relative">
+            <button
+              onClick={() => setShowNotifMenu(!showNotifMenu)}
+              className="relative p-2 rounded-xl text-secondaryText hover:text-forest hover:bg-rice transition"
+              title="Notifications"
+            >
+              <Bell className="w-5 h-5" />
+              {unreadCount > 0 && (
+                <span className="absolute top-1 right-1 w-4 h-4 bg-status-error text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                  {unreadCount}
+                </span>
+              )}
+            </button>
+
+            {showNotifMenu && (
+              <div 
+                className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-xl border border-softBorder p-3 z-50 animate-in fade-in duration-100"
+                onClick={() => setShowNotifMenu(false)}
+              >
+                <div className="flex items-center justify-between border-b border-softBorder pb-2 mb-2 px-1">
+                  <div className="flex items-center space-x-2">
+                    <Bell className="w-4 h-4 text-forest" />
+                    <span className="text-xs font-bold text-forest-dark">
+                      {language === 'bn' ? 'নোটিফিকেশন সেন্টার' : 'Notifications'}
+                    </span>
+                    {unreadCount > 0 && (
+                      <span className="px-1.5 py-0.2 bg-red-100 text-status-error text-[10px] font-bold rounded-full">
+                        {unreadCount} নতুন
+                      </span>
+                    )}
+                  </div>
+                  {unreadCount > 0 && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        markAllNotificationsRead();
+                      }}
+                      className="text-[11px] text-forest hover:underline font-medium"
+                    >
+                      {language === 'bn' ? 'সব পড়া হয়েছে' : 'Mark all read'}
+                    </button>
+                  )}
+                </div>
+
+                <div className="max-h-72 overflow-y-auto space-y-2">
+                  {notifications.slice(0, 6).map((notif) => (
+                    <div
+                      key={notif.id}
+                      className={`p-2.5 rounded-xl border text-left text-xs transition ${
+                        notif.isRead ? 'bg-white border-softBorder opacity-75' : 'bg-forest/5 border-forest/20 font-medium'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between text-[11px] text-mutedText mb-1">
+                        <span className="uppercase tracking-wider font-bold text-forest">{notif.sector}</span>
+                        <span>{notif.timestamp}</span>
+                      </div>
+                      <p className="text-forest-dark font-bold text-xs">
+                        {language === 'bn' ? notif.titleBn : notif.title}
+                      </p>
+                      <p className="text-secondaryText text-[11px] mt-0.5 line-clamp-2">
+                        {language === 'bn' ? notif.messageBn : notif.message}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Quick Demo Reset */}
+          <button
+            onClick={resetAllData}
+            title={language === 'bn' ? 'ডেমো ডেটা রিসেট করুন' : 'Reset mock demo data'}
+            className="p-2 text-mutedText hover:text-clay hover:bg-rice rounded-xl transition"
+          >
+            <RotateCcw className="w-4 h-4" />
+          </button>
+        </div>
+
+      </div>
+    </header>
+  );
+};

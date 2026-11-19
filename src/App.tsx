@@ -1,0 +1,91 @@
+import React, { useState } from 'react';
+import { useApp } from './context/AppContext';
+import { Navbar } from './components/layout/Navbar';
+import { Sidebar } from './components/layout/Sidebar';
+import { MobileNav } from './components/layout/MobileNav';
+import { ToastContainer } from './components/common/ToastContainer';
+import { Phase2Modal } from './components/roadmap/Phase2Modal';
+import { OnboardingModal } from './pages/auth/OnboardingModal';
+
+// Pages
+import { HomeDashboard } from './pages/dashboard/HomeDashboard';
+import { AgricultureHub } from './pages/agriculture/AgricultureHub';
+import { LivestockHub } from './pages/livestock/LivestockHub';
+import { FisheriesHub } from './pages/fisheries/FisheriesHub';
+import { MarketplaceHub } from './pages/marketplace/MarketplaceHub';
+import { MarketPricesPage } from './pages/prices/MarketPricesPage';
+import { ExpertsHub } from './pages/experts/ExpertsHub';
+import { ExpertDashboard } from './pages/experts/ExpertDashboard';
+import { AdminDashboard } from './pages/admin/AdminDashboard';
+import { ProfilePage } from './pages/profile/ProfilePage';
+
+export const App: React.FC = () => {
+  const { isOffline, language } = useApp();
+
+  const [currentTab, setCurrentTab] = useState<string>('dashboard');
+  const [currentSubTab, setCurrentSubTab] = useState<string>('overview');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
+  const [showOnboarding, setShowOnboarding] = useState<boolean>(false);
+
+  const handleNavigate = (tab: string, subtab?: string) => {
+    setCurrentTab(tab);
+    if (subtab) {
+      setCurrentSubTab(subtab);
+    } else {
+      setCurrentSubTab('overview');
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  return (
+    <div className="min-h-screen bg-rice flex flex-col font-sans selection:bg-forest/20 selection:text-forest-dark">
+      {/* Offline Status Bar Banner (if toggled) */}
+      {isOffline && (
+        <div className="bg-amber-600 text-white text-xs font-semibold py-1.5 px-4 text-center">
+          {language === 'bn' 
+            ? '⚠️ সিমুলেটেড অফলাইন মোড: সংরক্ষিত ডেটা লোকাল স্টোরেজে সক্রিয় রয়েছে। রিমোট অ্যাকশনের জন্য অনলাইন সংযোগ প্রয়োজন।' 
+            : '⚠️ Simulated Offline Mode: Saved records accessible locally. Remote actions require connectivity.'}
+        </div>
+      )}
+
+      {/* Top Navbar */}
+      <Navbar onOpenMobileMenu={() => {}} />
+
+      {/* Main Body with Sidebar + Main Content */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Desktop Sidebar */}
+        <Sidebar
+          currentTab={currentTab}
+          onSelectTab={(tab) => handleNavigate(tab)}
+          collapsed={sidebarCollapsed}
+          onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+        />
+
+        {/* Main Content Area */}
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full pb-20 md:pb-8 overflow-y-auto">
+          {currentTab === 'dashboard' && <HomeDashboard onNavigate={handleNavigate} />}
+          {currentTab === 'agriculture' && <AgricultureHub initialSubTab={currentSubTab} />}
+          {currentTab === 'livestock' && <LivestockHub initialSubTab={currentSubTab} />}
+          {currentTab === 'fisheries' && <FisheriesHub initialSubTab={currentSubTab} />}
+          {currentTab === 'marketplace' && <MarketplaceHub initialSubTab={currentSubTab} />}
+          {currentTab === 'prices' && <MarketPricesPage />}
+          {currentTab === 'experts' && <ExpertsHub />}
+          {currentTab === 'expert_dashboard' && <ExpertDashboard />}
+          {currentTab === 'admin' && <AdminDashboard />}
+          {currentTab === 'profile' && <ProfilePage />}
+        </main>
+      </div>
+
+      {/* Mobile Sticky Navigation & Drawer */}
+      <MobileNav
+        currentTab={currentTab}
+        onSelectTab={(tab) => handleNavigate(tab)}
+      />
+
+      {/* Floating System Modals */}
+      <Phase2Modal />
+      <OnboardingModal isOpen={showOnboarding} onClose={() => setShowOnboarding(false)} />
+      <ToastContainer />
+    </div>
+  );
+};
