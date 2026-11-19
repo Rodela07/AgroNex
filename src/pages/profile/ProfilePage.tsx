@@ -322,6 +322,45 @@ export const ProfilePage: React.FC = () => {
           </div>
         </div>
 
+        {/* Sectors Selection */}
+        <div className="card-premium p-5 space-y-4">
+          <div className="border-b border-softBorder pb-3">
+            <h3 className="text-sm font-bold text-forest-dark">সক্রিয় ব্যবসায়িক সেক্টর (Active Sectors)</h3>
+            <p className="text-xs text-secondaryText leading-relaxed">
+              আপনি যেসব সেক্টরে সক্রিয়ভাবে কাজ করেন সেগুলো নির্বাচন করুন।
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[
+              { id: 'agriculture', label: 'কৃষি ফসল (Agriculture)', icon: Sprout },
+              { id: 'livestock', label: 'পশু ও খামারি (Livestock)', icon: Beef },
+              { id: 'fisheries', label: 'মৎস্য চাষ (Fisheries)', icon: Fish },
+              { id: 'marketplace', label: 'মার্কেটপ্লেস (Marketplace)', icon: ShoppingBag }
+            ].map(s => {
+              const Icon = s.icon;
+              const isChecked = userSectors.includes(s.id as SectorType);
+              return (
+                <label 
+                  key={s.id} 
+                  className={`p-3 rounded-xl border text-xs cursor-pointer flex items-center space-x-2 transition ${
+                    isChecked ? 'bg-forest-50 border-forest text-forest-dark font-bold shadow-2xs' : 'bg-warmWhite border-softBorder text-primaryText hover:bg-rice'
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={isChecked}
+                    onChange={() => handleToggleSector(s.id as SectorType)}
+                    className="rounded text-forest focus:ring-forest"
+                  />
+                  <Icon className="w-3.5 h-3.5 text-forest shrink-0" />
+                  <span>{s.label}</span>
+                </label>
+              );
+            })}
+          </div>
+        </div>
+
         <div className="flex justify-end pt-2">
           <button
             type="submit"

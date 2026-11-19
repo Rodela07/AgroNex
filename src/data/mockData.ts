@@ -1,4 +1,4 @@
-import { 
+import type { 
   UserProfile, 
   LandProfile, 
   LivestockFarm, 
@@ -17,7 +17,7 @@ import {
   ConsultationBooking, 
   NotificationItem, 
   CalendarReminder 
-} from '../types';
+} from '../types/index.ts';
 
 export const INITIAL_USER: UserProfile = {
   id: 'usr_001',

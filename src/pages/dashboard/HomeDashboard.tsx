@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { WeatherWidget } from '../../components/weather/WeatherWidget';
+import { CreateReminderModal } from '../../components/common/CreateReminderModal';
 import { 
   Sprout, 
   Beef, 
@@ -52,6 +53,8 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({ onNavigate }) => {
 
   const pendingReminders = reminders.filter(r => !r.isCompleted);
   const completedReminders = reminders.filter(r => r.isCompleted);
+
+  const [showReminderModal, setShowReminderModal] = useState(false);
 
   return (
     <div className="space-y-6">
@@ -179,9 +182,18 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({ onNavigate }) => {
                   {language === 'bn' ? 'আজকের কৃষি ও খামারি কার্যক্রম' : 'Today’s Farming Activities & Reminders'}
                 </h3>
               </div>
-              <span className="text-xs text-secondaryText">
-                {language === 'bn' ? `${pendingReminders.length} টি কাজ বাকি` : `${pendingReminders.length} pending`}
-              </span>
+              <div className="flex items-center space-x-2">
+                <span className="text-xs text-secondaryText">
+                  {language === 'bn' ? `${pendingReminders.length} টি কাজ বাকি` : `${pendingReminders.length} pending`}
+                </span>
+                <button
+                  onClick={() => setShowReminderModal(true)}
+                  className="px-2.5 py-1 rounded-lg bg-forest/10 hover:bg-forest text-forest hover:text-white text-xs font-bold transition flex items-center space-x-1"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>{language === 'bn' ? 'নতুন রিমাইন্ডার' : 'Add'}</span>
+                </button>
+              </div>
             </div>
 
             {reminders.length === 0 ? (
@@ -434,6 +446,11 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({ onNavigate }) => {
         </div>
 
       </div>
+
+      <CreateReminderModal
+        isOpen={showReminderModal}
+        onClose={() => setShowReminderModal(false)}
+      />
 
     </div>
   );

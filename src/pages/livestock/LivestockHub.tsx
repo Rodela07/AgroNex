@@ -103,23 +103,88 @@ export const LivestockHub: React.FC<{ initialSubTab?: string }> = ({ initialSubT
   // Delete target
   const [deleteTargetFarmId, setDeleteTargetFarmId] = useState<string | null>(null);
 
+  // Edit targets
+  const [editingFarmId, setEditingFarmId] = useState<string | null>(null);
+  const [editingAnimalId, setEditingAnimalId] = useState<string | null>(null);
+
+  const handleOpenAddFarm = () => {
+    setEditingFarmId(null);
+    setFarmName('');
+    setLivestockType('cattle');
+    setAnimalCount(10);
+    setPurpose('Dairy (দুগ্ধ)');
+    setSpaceSqFt(2000);
+    setBudget(500000);
+    setShowFarmModal(true);
+  };
+
+  const handleOpenEditFarm = (farm: LivestockFarm) => {
+    setEditingFarmId(farm.id);
+    setFarmName(farm.name);
+    setLivestockType(farm.livestockType);
+    setAnimalCount(farm.animalCount);
+    setPurpose(farm.purpose);
+    setSpaceSqFt(farm.availableSpaceSqFt);
+    setBudget(farm.budget);
+    setShowFarmModal(true);
+  };
+
+  const handleOpenAddAnimal = (farmId?: string) => {
+    setEditingAnimalId(null);
+    setSelectedFarmId(farmId || livestockFarms[0]?.id || 'lsk_1');
+    setTagNumber('');
+    setAnimalBreed('Friesian Cross (হোলস্টেইন ফ্রিজিয়ান সংকর)');
+    setAnimalAge(24);
+    setAnimalGender('Female');
+    setAnimalWeight(350);
+    setAnimalHealth('healthy');
+    setShowAnimalModal(true);
+  };
+
+  const handleOpenEditAnimal = (animal: AnimalRecord) => {
+    setEditingAnimalId(animal.id);
+    setSelectedFarmId(animal.farmId);
+    setTagNumber(animal.tagNumber);
+    setAnimalBreed(animal.breed);
+    setAnimalAge(animal.ageMonths);
+    setAnimalGender(animal.gender);
+    setAnimalWeight(animal.weightKg);
+    setAnimalHealth(animal.healthStatus);
+    setShowAnimalModal(true);
+  };
+
   const handleSaveFarm = (e: React.FormEvent) => {
     e.preventDefault();
     if (!farmName.trim()) return;
 
-    addLivestockFarm({
-      name: farmName,
-      livestockType,
-      animalCount: Number(animalCount),
-      budget: Number(budget),
-      purpose,
-      district: 'Bogura',
-      upazila: 'Shibganj',
-      availableSpaceSqFt: Number(spaceSqFt),
-      capacity: Math.round(Number(spaceSqFt) / (livestockType === 'cattle' ? 80 : livestockType === 'goat' ? 25 : 2)),
-      setupCostEstimate: Math.round(Number(budget) * 0.6),
-      monthlyOperatingCost: Math.round(Number(budget) * 0.12)
-    });
+    if (editingFarmId) {
+      updateLivestockFarm(editingFarmId, {
+        name: farmName,
+        livestockType,
+        animalCount: Number(animalCount),
+        budget: Number(budget),
+        purpose,
+        availableSpaceSqFt: Number(spaceSqFt),
+        capacity: Math.round(Number(spaceSqFt) / (livestockType === 'cattle' ? 80 : livestockType === 'goat' ? 25 : 2)),
+        setupCostEstimate: Math.round(Number(budget) * 0.6),
+        monthlyOperatingCost: Math.round(Number(budget) * 0.12)
+      });
+      setEditingFarmId(null);
+    } else {
+      addLivestockFarm({
+        name: farmName,
+        livestockType,
+        animalCount: Number(animalCount),
+        budget: Number(budget),
+        purpose,
+        district: 'Bogura',
+        upazila: 'Shibganj',
+        availableSpaceSqFt: Number(spaceSqFt),
+        capacity: Math.round(Number(spaceSqFt) / (livestockType === 'cattle' ? 80 : livestockType === 'goat' ? 25 : 2)),
+        setupCostEstimate: Math.round(Number(budget) * 0.6),
+        monthlyOperatingCost: Math.round(Number(budget) * 0.12)
+      });
+    }
     setFarmName('');
     setShowFarmModal(false);
   };
@@ -128,15 +193,28 @@ export const LivestockHub: React.FC<{ initialSubTab?: string }> = ({ initialSubT
     e.preventDefault();
     if (!tagNumber.trim()) return;
 
-    addAnimal({
-      farmId: selectedFarmId,
-      tagNumber,
-      breed: animalBreed,
-      ageMonths: Number(animalAge),
-      gender: animalGender,
-      weightKg: Number(animalWeight),
-      healthStatus: animalHealth
-    });
+    if (editingAnimalId) {
+      updateAnimal(editingAnimalId, {
+        farmId: selectedFarmId,
+        tagNumber,
+        breed: animalBreed,
+        ageMonths: Number(animalAge),
+        gender: animalGender,
+        weightKg: Number(animalWeight),
+        healthStatus: animalHealth
+      });
+      setEditingAnimalId(null);
+    } else {
+      addAnimal({
+        farmId: selectedFarmId,
+        tagNumber,
+        breed: animalBreed,
+        ageMonths: Number(animalAge),
+        gender: animalGender,
+        weightKg: Number(animalWeight),
+        healthStatus: animalHealth
+      });
+    }
     setTagNumber('');
     setShowAnimalModal(false);
   };
@@ -228,14 +306,14 @@ export const LivestockHub: React.FC<{ initialSubTab?: string }> = ({ initialSubT
 
         <div className="flex items-center gap-2">
           <button
-            onClick={() => setShowAnimalModal(true)}
+            onClick={() => handleOpenAddAnimal()}
             className="btn-secondary text-xs"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>{language === 'bn' ? 'পশু নিবন্ধন' : 'Register Animal'}</span>
           </button>
           <button
-            onClick={() => setShowFarmModal(true)}
+            onClick={handleOpenAddFarm}
             className="btn-clay text-xs"
           >
             <Plus className="w-3.5 h-3.5" />
@@ -386,7 +464,7 @@ export const LivestockHub: React.FC<{ initialSubTab?: string }> = ({ initialSubT
               <p className="text-xs text-secondaryText">পশুর আবাসন ধারণক্ষমতা ও উৎপাদন খরচ ট্র্যাকিং</p>
             </div>
             <button
-              onClick={() => setShowFarmModal(true)}
+              onClick={handleOpenAddFarm}
               className="btn-clay text-xs"
             >
               <Plus className="w-3.5 h-3.5" />
@@ -400,7 +478,7 @@ export const LivestockHub: React.FC<{ initialSubTab?: string }> = ({ initialSubT
               title="কোনো খামার শেড নিবন্ধিত নেই"
               description="ডেইরি, মোটাতাজাকরণ বা ছাগল খামার শেড যোগ করে সঠিক আয়তন ও ধারণক্ষমতা পরিকল্পনা করুন।"
               actionLabel="+ নতুন খামার যোগ করুন"
-              onAction={() => setShowFarmModal(true)}
+              onAction={handleOpenAddFarm}
             />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -415,13 +493,22 @@ export const LivestockHub: React.FC<{ initialSubTab?: string }> = ({ initialSubT
                         <h4 className="text-base font-bold text-forest-dark mt-1.5">{farm.name}</h4>
                         <p className="text-xs text-secondaryText">{farm.purpose} • {farm.upazila}, {farm.district}</p>
                       </div>
-                      <button
-                        onClick={() => setDeleteTargetFarmId(farm.id)}
-                        className="p-1.5 text-secondaryText hover:text-status-error hover:bg-red-50 rounded-lg transition"
-                        title="খামার মুছে ফেলুন"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center space-x-1">
+                        <button
+                          onClick={() => handleOpenEditFarm(farm)}
+                          className="p-1.5 text-secondaryText hover:text-amber-900 hover:bg-amber-50 rounded-lg transition"
+                          title="খামারের তথ্য সম্পাদনা করুন"
+                        >
+                          <Edit3 className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => setDeleteTargetFarmId(farm.id)}
+                          className="p-1.5 text-secondaryText hover:text-status-error hover:bg-red-50 rounded-lg transition"
+                          title="খামার মুছে ফেলুন"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-2 mt-4 pt-3 border-t border-softBorder text-xs">
@@ -472,7 +559,7 @@ export const LivestockHub: React.FC<{ initialSubTab?: string }> = ({ initialSubT
               <p className="text-xs text-secondaryText">প্রতিটি পশুর স্বতন্ত্র রেকর্ড, শারীরিক ওজন ও স্বাস্থ্য ইতিহাস</p>
             </div>
             <button
-              onClick={() => setShowAnimalModal(true)}
+              onClick={() => handleOpenAddAnimal()}
               className="btn-primary text-xs"
             >
               <Plus className="w-3.5 h-3.5" />
@@ -486,7 +573,7 @@ export const LivestockHub: React.FC<{ initialSubTab?: string }> = ({ initialSubT
               title="কোনো পশুর প্রোফাইল নেই"
               description="খামারের প্রতিটি পশুর ট্যাগ নম্বর, জাত, বয়স, ওজন ও স্বাস্থ্য নিয়মিত ট্র্যাক করতে পশু যোগ করুন।"
               actionLabel="+ পশু নিবন্ধন করুন"
-              onAction={() => setShowAnimalModal(true)}
+              onAction={() => handleOpenAddAnimal()}
             />
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -499,7 +586,16 @@ export const LivestockHub: React.FC<{ initialSubTab?: string }> = ({ initialSubT
                       </span>
                       <h4 className="text-xs font-bold text-primaryText mt-2">{anm.breed}</h4>
                     </div>
-                    <StatusBadge status={anm.healthStatus} size="sm" />
+                    <div className="flex items-center space-x-1">
+                      <StatusBadge status={anm.healthStatus} size="sm" />
+                      <button
+                        onClick={() => handleOpenEditAnimal(anm)}
+                        className="p-1 text-secondaryText hover:text-forest rounded transition"
+                        title="পশুর তথ্য সম্পাদন করুন"
+                      >
+                        <Edit3 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
 
                   <div className="space-y-1.5 text-xs text-secondaryText">
@@ -908,11 +1004,11 @@ export const LivestockHub: React.FC<{ initialSubTab?: string }> = ({ initialSubT
         </div>
       )}
 
-      {/* MODAL: ADD FARM */}
+      {/* MODAL: ADD / EDIT FARM */}
       <Modal
         isOpen={showFarmModal}
         onClose={() => setShowFarmModal(false)}
-        title="নতুন পশুর খামার যুক্ত করুন"
+        title={editingFarmId ? 'খামারের তথ্য সম্পাদনা করুন' : 'নতুন পশুর খামার যুক্ত করুন'}
         maxWidth="md"
       >
         <form onSubmit={handleSaveFarm} className="space-y-3.5 text-xs">
@@ -991,11 +1087,11 @@ export const LivestockHub: React.FC<{ initialSubTab?: string }> = ({ initialSubT
         </form>
       </Modal>
 
-      {/* MODAL: ADD ANIMAL */}
+      {/* MODAL: ADD / EDIT ANIMAL */}
       <Modal
         isOpen={showAnimalModal}
         onClose={() => setShowAnimalModal(false)}
-        title="নতুন পশুর একক নিবন্ধন (Tag ID)"
+        title={editingAnimalId ? 'পশুর তথ্য সম্পাদনা করুন' : 'নতুন পশুর একক নিবন্ধন (Tag ID)'}
         maxWidth="md"
       >
         <form onSubmit={handleSaveAnimal} className="space-y-3.5 text-xs">

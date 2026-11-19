@@ -1,4 +1,4 @@
-import { Language } from '../types';
+import type { Language } from '../types/index.ts';
 
 export const toBengaliDigits = (num: number | string): string => {
   const bengaliDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];

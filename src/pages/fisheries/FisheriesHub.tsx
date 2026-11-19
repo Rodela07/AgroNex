@@ -6,6 +6,7 @@ import {
   Droplets, 
   Activity, 
   Search, 
+  Edit3, 
   Bot, 
   Stethoscope, 
   Trash2, 
@@ -87,22 +88,59 @@ export const FisheriesHub: React.FC<{ initialSubTab?: string }> = ({ initialSubT
   // Delete target
   const [deleteTargetPondId, setDeleteTargetPondId] = useState<string | null>(null);
 
+  // Edit target
+  const [editingPondId, setEditingPondId] = useState<string | null>(null);
+
+  const handleOpenAddPond = () => {
+    setEditingPondId(null);
+    setPondName('');
+    setPondSize(50);
+    setPondDepth(6.0);
+    setFarmingType('polyculture');
+    setWaterSource('Groundwater / Deep Tube-well');
+    setBudget(250000);
+    setShowPondModal(true);
+  };
+
+  const handleOpenEditPond = (pond: PondProfile) => {
+    setEditingPondId(pond.id);
+    setPondName(pond.name);
+    setPondSize(pond.sizeDecimal);
+    setPondDepth(pond.depthFeet);
+    setFarmingType(pond.farmingType);
+    setWaterSource(pond.waterSource);
+    setBudget(pond.budget);
+    setShowPondModal(true);
+  };
+
   const handleSavePond = (e: React.FormEvent) => {
     e.preventDefault();
     if (!pondName.trim()) return;
 
-    addPond({
-      name: pondName,
-      sizeDecimal: Number(pondSize),
-      depthFeet: Number(pondDepth),
-      waterSource,
-      farmingType,
-      primarySpecies: farmingType === 'polyculture' ? ['Rui (রুই)', 'Katla (কাতলা)', 'Mrigal (মৃগেল)'] : ['Monosex Tilapia (তেলাপিয়া)'],
-      district: 'Mymensingh',
-      upazila: 'Trishal',
-      budget: Number(budget),
-      stockingDate: new Date().toISOString().split('T')[0]
-    });
+    if (editingPondId) {
+      updatePond(editingPondId, {
+        name: pondName,
+        sizeDecimal: Number(pondSize),
+        depthFeet: Number(pondDepth),
+        farmingType,
+        waterSource,
+        budget: Number(budget)
+      });
+      setEditingPondId(null);
+    } else {
+      addPond({
+        name: pondName,
+        sizeDecimal: Number(pondSize),
+        depthFeet: Number(pondDepth),
+        waterSource,
+        farmingType,
+        primarySpecies: farmingType === 'polyculture' ? ['Rui (রুই)', 'Katla (কাতলা)', 'Mrigal (মৃগেল)'] : ['Monosex Tilapia (তেলাপিয়া)'],
+        district: 'Mymensingh',
+        upazila: 'Trishal',
+        budget: Number(budget),
+        stockingDate: new Date().toISOString().split('T')[0]
+      });
+    }
     setPondName('');
     setShowPondModal(false);
   };
@@ -210,7 +248,7 @@ export const FisheriesHub: React.FC<{ initialSubTab?: string }> = ({ initialSubT
             <span>জলের পরীক্ষা রেকর্ড</span>
           </button>
           <button
-            onClick={() => setShowPondModal(true)}
+            onClick={handleOpenAddPond}
             className="btn-primary text-xs"
           >
             <Plus className="w-3.5 h-3.5" />
@@ -390,7 +428,7 @@ export const FisheriesHub: React.FC<{ initialSubTab?: string }> = ({ initialSubT
               <p className="text-xs text-secondaryText">আয়তন, গভীরতা, স্টকিং তারিখ ও খাদ্য বাজেট ব্যবস্থাপনা</p>
             </div>
             <button
-              onClick={() => setShowPondModal(true)}
+              onClick={handleOpenAddPond}
               className="btn-primary text-xs"
             >
               <Plus className="w-3.5 h-3.5" />
@@ -404,7 +442,7 @@ export const FisheriesHub: React.FC<{ initialSubTab?: string }> = ({ initialSubT
               title="কোনো নিবন্ধিত পুকুর নেই"
               description="আপনার মৎস্য খামারের আয়তন ও চাষকৃত প্রজাতি যুক্ত করে পুকুর ব্যবস্থাপনা শুরু করুন।"
               actionLabel="+ নতুন পুকুর যোগ করুন"
-              onAction={() => setShowPondModal(true)}
+              onAction={handleOpenAddPond}
             />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -415,13 +453,22 @@ export const FisheriesHub: React.FC<{ initialSubTab?: string }> = ({ initialSubT
                       <h4 className="text-base font-bold text-forest-dark">{pnd.name}</h4>
                       <p className="text-xs text-secondaryText">আয়তন: {toBengaliDigits(pnd.sizeDecimal)} শতক • গভীরতা: {toBengaliDigits(pnd.depthFeet)} ফুট</p>
                     </div>
-                    <button
-                      onClick={() => setDeleteTargetPondId(pnd.id)}
-                      className="p-1.5 text-secondaryText hover:text-status-error hover:bg-red-50 rounded-lg transition"
-                      title="পুকুর মুছে ফেলুন"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    <div className="flex items-center space-x-1">
+                      <button
+                        onClick={() => handleOpenEditPond(pnd)}
+                        className="p-1.5 text-secondaryText hover:text-river hover:bg-blue-50 rounded-lg transition"
+                        title="পুকুরের তথ্য সম্পাদনা করুন"
+                      >
+                        <Edit3 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => setDeleteTargetPondId(pnd.id)}
+                        className="p-1.5 text-secondaryText hover:text-status-error hover:bg-red-50 rounded-lg transition"
+                        title="পুকুর মুছে ফেলুন"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
 
                   <div className="p-3 rounded-xl bg-rice/60 space-y-1.5 text-xs">
@@ -878,11 +925,11 @@ export const FisheriesHub: React.FC<{ initialSubTab?: string }> = ({ initialSubT
         </div>
       )}
 
-      {/* MODAL: ADD POND */}
+      {/* MODAL: ADD / EDIT POND */}
       <Modal
         isOpen={showPondModal}
         onClose={() => setShowPondModal(false)}
-        title="নতুন পুকুর যুক্ত করুন"
+        title={editingPondId ? 'পুকুরের তথ্য সম্পাদনা করুন' : 'নতুন পুকুর যুক্ত করুন'}
         maxWidth="md"
       >
         <form onSubmit={handleSavePond} className="space-y-3.5 text-xs">

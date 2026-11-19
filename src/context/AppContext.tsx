@@ -565,17 +565,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showToast(language === 'bn' ? 'মূল্য সতর্কবার্তা মুছে ফেলা হয়েছে' : 'Price alert deleted', 'info');
   };
 
-  const simulatePriceUpdate = (productName: string, newPrice: number) => {
-    // Updates current price and triggers alerts if matching condition
-    setMarketPrices((prev) => prev.map((m) => m.productBn.includes(productName) || m.product.includes(productName) ? {
-      ...m,
-      wholesalePrice: newPrice,
-      recordedTimestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    } : m));
+  const simulatePriceUpdate = (idOrName: string, newPrice: number) => {
+    let targetItemName = idOrName;
+    setMarketPrices((prev) => prev.map((m) => {
+      const isMatch = m.id === idOrName || m.productBn.includes(idOrName) || m.product.toLowerCase().includes(idOrName.toLowerCase()) || idOrName.includes(m.productBn);
+      if (isMatch) {
+        targetItemName = m.productBn;
+        return {
+          ...m,
+          wholesalePrice: newPrice,
+          recordedTimestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        };
+      }
+      return m;
+    }));
 
     // Check alerts
     priceAlerts.forEach((a) => {
-      if (a.isActive && (a.productName.includes(productName) || productName.includes(a.productName))) {
+      if (a.isActive && (a.productName.includes(targetItemName) || targetItemName.includes(a.productName) || a.productName.includes(idOrName) || idOrName.includes(a.productName))) {
         const isTriggered = (a.condition === 'at_or_above' && newPrice >= a.targetPrice) ||
                             (a.condition === 'at_or_below' && newPrice <= a.targetPrice);
         if (isTriggered) {

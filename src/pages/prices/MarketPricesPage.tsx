@@ -43,7 +43,7 @@ export const MarketPricesPage: React.FC = () => {
 
   // Selected item for historical trend chart
   const [activeItemForChart, setActiveItemForChart] = useState<MarketPriceItem>(marketPrices[0] || {
-    id: 'mp_1',
+    id: 'mkt_1',
     product: 'BRRI Dhan-28 (Paddy)',
     productBn: 'ব্রি ধান-২৮ (ধান)',
     category: 'Cereal / ধান',
@@ -78,6 +78,7 @@ export const MarketPricesPage: React.FC = () => {
   const [alertCondition, setAlertCondition] = useState<'at_or_above' | 'at_or_below'>('at_or_above');
 
   // Simulated price trigger test state
+  const [simTargetProductId, setSimTargetProductId] = useState<string>('mp_1');
   const [simNewPrice, setSimNewPrice] = useState<number>(1360);
 
   const filteredPrices = marketPrices.filter((item) => {
@@ -487,7 +488,24 @@ export const MarketPricesPage: React.FC = () => {
 
           <div className="space-y-3 text-xs">
             <div>
-              <label className="block font-bold text-primaryText mb-1">সিমুলেটেড নতুন পাইকারি মূল্য (টাকা / মণ)</label>
+              <label className="block font-bold text-primaryText mb-1">পরীক্ষামূলক পণ্য নির্বাচন করুন</label>
+              <select
+                value={simTargetProductId}
+                onChange={(e) => {
+                  setSimTargetProductId(e.target.value);
+                  const item = marketPrices.find(m => m.id === e.target.value);
+                  if (item) setSimNewPrice(item.wholesalePrice + 40);
+                }}
+                className="input-field"
+              >
+                {marketPrices.map(m => (
+                  <option key={m.id} value={m.id}>{m.productBn} ({m.district}) — বর্তমান পাইকারি: ৳{toBengaliDigits(m.wholesalePrice)}/{m.unit}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block font-bold text-primaryText mb-1">সিমুলেটেড নতুন পাইকারি মূল্য (টাকা)</label>
               <input
                 type="number"
                 value={simNewPrice}
@@ -498,7 +516,7 @@ export const MarketPricesPage: React.FC = () => {
 
             <button
               onClick={() => {
-                simulatePriceUpdate('mp_1', Number(simNewPrice));
+                simulatePriceUpdate(simTargetProductId, Number(simNewPrice));
               }}
               className="w-full btn-primary"
             >

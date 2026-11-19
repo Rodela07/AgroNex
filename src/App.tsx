@@ -66,10 +66,10 @@ export const App: React.FC = () => {
         {/* Main Content Area */}
         <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full pb-20 md:pb-8 overflow-y-auto">
           {currentTab === 'dashboard' && <HomeDashboard onNavigate={handleNavigate} />}
-          {currentTab === 'agriculture' && <AgricultureHub initialSubTab={currentSubTab} />}
-          {currentTab === 'livestock' && <LivestockHub initialSubTab={currentSubTab} />}
-          {currentTab === 'fisheries' && <FisheriesHub initialSubTab={currentSubTab} />}
-          {currentTab === 'marketplace' && <MarketplaceHub initialSubTab={currentSubTab} />}
+          {currentTab === 'agriculture' && <AgricultureHub key={`agriculture_${currentSubTab}`} initialSubTab={currentSubTab} />}
+          {currentTab === 'livestock' && <LivestockHub key={`livestock_${currentSubTab}`} initialSubTab={currentSubTab} />}
+          {currentTab === 'fisheries' && <FisheriesHub key={`fisheries_${currentSubTab}`} initialSubTab={currentSubTab} />}
+          {currentTab === 'marketplace' && <MarketplaceHub key={`marketplace_${currentSubTab}`} initialSubTab={currentSubTab} />}
           {currentTab === 'prices' && <MarketPricesPage />}
           {currentTab === 'experts' && <ExpertsHub />}
           {currentTab === 'expert_dashboard' && <ExpertDashboard />}

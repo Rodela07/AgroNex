@@ -66,7 +66,7 @@ export const MarketplaceHub: React.FC<{ initialSubTab?: string }> = ({ initialSu
     showToast
   } = useApp();
 
-  const [activeTab, setActiveTab] = useState<string>(initialSubTab);
+  const [activeTab, setActiveTab] = useState<string>(initialSubTab === 'sell' ? 'my_listings' : initialSubTab);
 
   // Filters state for Explore Products
   const [searchTerm, setSearchTerm] = useState('');
@@ -76,7 +76,7 @@ export const MarketplaceHub: React.FC<{ initialSubTab?: string }> = ({ initialSu
   const [selectedSort, setSelectedSort] = useState<string>('latest');
 
   // Multi-step Listing Creation State (10-Step Wizard)
-  const [showSellModal, setShowSellModal] = useState(false);
+  const [showSellModal, setShowSellModal] = useState<boolean>(initialSubTab === 'sell');
   const [listingStep, setListingStep] = useState(1);
   const [sellSector, setSellSector] = useState<SectorType>('agriculture');
   const [sellCategory, setSellCategory] = useState('Rice & Paddy');
@@ -115,6 +115,35 @@ export const MarketplaceHub: React.FC<{ initialSubTab?: string }> = ({ initialSu
 
   // Delete listing confirmation
   const [deleteListingId, setDeleteListingId] = useState<string | null>(null);
+
+  // Edit listing state
+  const [editingListing, setEditingListing] = useState<MarketplaceListing | null>(null);
+  const [editPrice, setEditPrice] = useState<number>(0);
+  const [editQuantity, setEditQuantity] = useState<number>(0);
+  const [editGrade, setEditGrade] = useState<any>('Grade A (প্রিমিয়াম)');
+  const [editDescription, setEditDescription] = useState('');
+
+  const handleOpenEditListing = (listing: MarketplaceListing) => {
+    setEditingListing(listing);
+    setEditPrice(listing.pricePerUnit);
+    setEditQuantity(listing.quantity);
+    setEditGrade(listing.qualityGrade);
+    setEditDescription(listing.description);
+  };
+
+  const handleSaveListingEdit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingListing) return;
+
+    updateListing(editingListing.id, {
+      pricePerUnit: Number(editPrice),
+      quantity: Number(editQuantity),
+      qualityGrade: editGrade,
+      description: editDescription
+    });
+
+    setEditingListing(null);
+  };
 
   // Regional wholesale benchmark comparison for the currently selected product in sell form
   const benchmarkItem = marketPrices.find(m => 
@@ -501,13 +530,23 @@ export const MarketplaceHub: React.FC<{ initialSubTab?: string }> = ({ initialSu
                     </div>
 
                     <div className="flex items-center justify-between pt-2 border-t border-softBorder/60">
-                      <button
-                        onClick={() => toggleListingStatus(item.id, item.status === 'published' ? 'paused' : 'published')}
-                        className="text-xs font-bold text-secondaryText hover:text-primaryText flex items-center space-x-1"
-                      >
-                        {item.status === 'published' ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
-                        <span>{item.status === 'published' ? 'বিজ্ঞাপন স্থগিত' : 'সক্রিয় করুন'}</span>
-                      </button>
+                      <div className="flex items-center space-x-3">
+                        <button
+                          onClick={() => toggleListingStatus(item.id, item.status === 'published' ? 'paused' : 'published')}
+                          className="text-xs font-bold text-secondaryText hover:text-primaryText flex items-center space-x-1"
+                        >
+                          {item.status === 'published' ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
+                          <span>{item.status === 'published' ? 'বিজ্ঞাপন স্থগিত' : 'সক্রিয় করুন'}</span>
+                        </button>
+                        <button
+                          onClick={() => handleOpenEditListing(item)}
+                          className="text-xs font-bold text-forest hover:underline flex items-center space-x-1"
+                          title="বিজ্ঞাপন সম্পাদনা করুন"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                          <span>সম্পাদনা</span>
+                        </button>
+                      </div>
 
                       <button
                         onClick={() => setDeleteListingId(item.id)}
@@ -1386,6 +1425,88 @@ export const MarketplaceHub: React.FC<{ initialSubTab?: string }> = ({ initialSu
               <span>রসিদ প্রিন্ট করুন</span>
             </button>
           </div>
+        </Modal>
+      )}
+
+      {/* MODAL: EDIT LISTING */}
+      {editingListing && (
+        <Modal
+          isOpen={true}
+          onClose={() => setEditingListing(null)}
+          title={`বিজ্ঞাপন সম্পাদনা — ${editingListing.productName}`}
+          maxWidth="md"
+        >
+          <form onSubmit={handleSaveListingEdit} className="space-y-3.5 text-xs">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block font-bold text-primaryText mb-1">
+                  বিক্রয় দর (টাকা প্রতি {editingListing.unit}) *
+                </label>
+                <input
+                  type="number"
+                  required
+                  min="1"
+                  value={editPrice}
+                  onChange={(e) => setEditPrice(Number(e.target.value))}
+                  className="input-field font-bold text-forest"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-primaryText mb-1">
+                  উপলব্ধ পরিমাণ ({editingListing.unit}) *
+                </label>
+                <input
+                  type="number"
+                  required
+                  min="1"
+                  value={editQuantity}
+                  onChange={(e) => setEditQuantity(Number(e.target.value))}
+                  className="input-field"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block font-bold text-primaryText mb-1">গুণমান গ্রেড</label>
+              <select
+                value={editGrade}
+                onChange={(e) => setEditGrade(e.target.value as any)}
+                className="input-field"
+              >
+                <option value="Grade A (প্রিমিয়াম)">গ্রেড এ (প্রিমিয়াম ও বাছাইকৃত)</option>
+                <option value="Grade B (স্ট্যান্ডার্ড)">গ্রেড বি (স্ট্যান্ডার্ড বাজার মান)</option>
+                <option value="Standard (সাধারণ)">সাধারণ পাইকারি মান</option>
+                <option value="Export Quality (রপ্তানি মান)">রপ্তানি মান (Export Quality)</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block font-bold text-primaryText mb-1">পণ্যের অতিরিক্ত বিবরণ</label>
+              <textarea
+                rows={3}
+                value={editDescription}
+                onChange={(e) => setEditDescription(e.target.value)}
+                className="input-field resize-none leading-relaxed"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-3 border-t border-softBorder">
+              <button
+                type="button"
+                onClick={() => setEditingListing(null)}
+                className="btn-secondary text-xs"
+              >
+                বাতিল
+              </button>
+              <button
+                type="submit"
+                className="btn-clay text-xs"
+              >
+                হালনাগাদ সংরক্ষণ করুন
+              </button>
+            </div>
+          </form>
         </Modal>
       )}
 

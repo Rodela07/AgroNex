@@ -30,6 +30,7 @@ import { LandProfile, LandUnit, FertilizerPlan } from '../../types';
 import { Modal } from '../../components/common/Modal';
 import { ConfirmDialog } from '../../components/common/ConfirmDialog';
 import { EmptyState } from '../../components/common/EmptyState';
+import { CreateReminderModal } from '../../components/common/CreateReminderModal';
 import { formatCurrency, formatNumber, toBengaliDigits } from '../../utils/formatters';
 
 export const AgricultureHub: React.FC<{ initialSubTab?: string }> = ({ initialSubTab = 'overview' }) => {
@@ -94,6 +95,9 @@ export const AgricultureHub: React.FC<{ initialSubTab?: string }> = ({ initialSu
   const [selectedExpertForBooking, setSelectedExpertForBooking] = useState<any | null>(null);
   const [bookingTopic, setBookingTopic] = useState('');
   const [bookingUrgency, setBookingUrgency] = useState<'normal' | 'emergency'>('normal');
+
+  // Reminder Modal State
+  const [showReminderModal, setShowReminderModal] = useState(false);
 
   // Convert any land size to Decimals for calculations
   const convertToDecimals = (size: number, unit: LandUnit): number => {
@@ -1074,17 +1078,7 @@ export const AgricultureHub: React.FC<{ initialSubTab?: string }> = ({ initialSu
               <p className="text-xs text-secondaryText">বোরো ধান ও আলু আবাদের পর্যায়ক্রমিক সময়সূচি</p>
             </div>
             <button
-              onClick={() => {
-                addReminder({
-                  sector: 'agriculture',
-                  title: 'নতুন সেচ বা সার রিমাইন্ডার',
-                  titleBn: 'ধান জমিতে পরিমিত পানি পর্যবেক্ষণ',
-                  date: new Date(Date.now() + 86400000).toISOString().split('T')[0],
-                  stage: 'সেচ পর্যায়',
-                  priority: 'medium',
-                  entityName: 'উত্তর মাঠের ধান জমি'
-                });
-              }}
+              onClick={() => setShowReminderModal(true)}
               className="btn-primary"
             >
               <Plus className="w-4 h-4" />
@@ -1375,6 +1369,13 @@ export const AgricultureHub: React.FC<{ initialSubTab?: string }> = ({ initialSu
           </div>
         </Modal>
       )}
+
+      {/* CREATE REMINDER MODAL */}
+      <CreateReminderModal
+        isOpen={showReminderModal}
+        onClose={() => setShowReminderModal(false)}
+        defaultSector="agriculture"
+      />
 
     </div>
   );
