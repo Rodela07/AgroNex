@@ -10,6 +10,13 @@ export interface LlmCallResult {
   actionCard?: ChatMessage['actionCard'];
   providerUsed: string;
   modelUsed: string;
+  toolSteps?: Array<{
+    toolName: string;
+    arguments: any;
+    result: any;
+    summaryText: string;
+    timestamp: string;
+  }>;
 }
 
 const AGRONEX_SYSTEM_PROMPT = `You are AgroNex AI (এগ্রোনেক্স এআই কৃষি সহকারী), a dedicated multilingual agricultural assistant designed to help ordinary farmers and agricultural communities in Bangladesh.
@@ -304,8 +311,9 @@ export async function queryServerAiApi(
     reply: json.reply,
     isEmergency: !!json.isEmergency,
     actionCard: json.actionCard,
-    providerUsed: json.provider || 'Google Gemini (Server-Secured)',
-    modelUsed: json.model || 'gemini-3.8-flash'
+    providerUsed: json.provider || 'AgroNex Agentic AI (Google Gemini)',
+    modelUsed: json.model || 'gemini-3.8-flash',
+    toolSteps: json.toolSteps || []
   };
 }
 

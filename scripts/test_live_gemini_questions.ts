@@ -82,7 +82,7 @@ async function main() {
 
   let successCount = 0;
 
-  const candidateModels = [model, 'gemini-3.8-flash', 'gemini-3.5-flash'].filter((v, i, a) => a.indexOf(v) === i);
+  const candidateModels = [model, 'gemini-3.8-flash', 'gemini-3.5-flash-lite', 'gemini-3.1-flash-lite'].filter((v, i, a) => a.indexOf(v) === i);
 
   for (const t of TEST_QUESTIONS) {
     console.log(`-------------------------------------------------------------`);
@@ -93,7 +93,11 @@ async function main() {
       const startTime = Date.now();
       try {
         console.log(`Calling Gemini (${m})...`);
-        const response = await ai.models.generateContent({
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('TIMEOUT_EXCEEDED')), 10000);
+        });
+
+        const generatePromise = ai.models.generateContent({
           model: m,
           contents: t.question,
           config: {
@@ -101,6 +105,8 @@ async function main() {
             temperature: 0.6
           }
         });
+
+        const response: any = await Promise.race([generatePromise, timeoutPromise]);
 
         const elapsed = Date.now() - startTime;
         const text = response.text || '';

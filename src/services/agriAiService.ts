@@ -17,6 +17,13 @@ export interface ChatMessage {
   isError?: boolean;
   failedQuery?: string;
   providerUsed?: string;
+  toolSteps?: Array<{
+    toolName: string;
+    arguments: any;
+    result: any;
+    summaryText: string;
+    timestamp: string;
+  }>;
   followUpQuestions?: string[];
   actionCard?: {
     type: 'fertilizer' | 'vet_booking' | 'expert_booking' | 'market_prices' | 'disease_guide';
@@ -35,6 +42,13 @@ export interface AiResponseResult {
   modelUsed: string;
   detectedLanguage: string;
   dominantLanguage: 'bn' | 'en';
+  toolSteps?: Array<{
+    toolName: string;
+    arguments: any;
+    result: any;
+    summaryText: string;
+    timestamp: string;
+  }>;
   actionCard?: ChatMessage['actionCard'];
   followUpQuestions?: string[];
   sector?: string;
@@ -380,10 +394,11 @@ export async function getAgriAiResponseAsync(
         isEmergency: llmResult.isEmergency,
         actionCard: llmResult.actionCard,
         isDemoMode: false,
-        providerUsed: llmResult.providerUsed || 'Google Gemini AI',
+        providerUsed: llmResult.providerUsed || 'AgroNex Agentic AI (Google Gemini)',
         modelUsed: llmResult.modelUsed || 'gemini-3.8-flash',
         detectedLanguage: langDetection.detected,
-        dominantLanguage: langDetection.dominant
+        dominantLanguage: langDetection.dominant,
+        toolSteps: llmResult.toolSteps
       };
     } catch (err: any) {
       console.error('[AgroNex AI] Server Gemini call failed:', err?.message || err);

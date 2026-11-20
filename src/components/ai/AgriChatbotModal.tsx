@@ -181,6 +181,7 @@ I understand Bengali script, Romanized Banglish (e.g. "Goru khabar khacche na ki
         isEmergency: response.isEmergency,
         isDemoMode: response.isDemoMode,
         providerUsed: response.providerUsed,
+        toolSteps: response.toolSteps,
         actionCard: response.actionCard,
         followUpQuestions: response.followUpQuestions
       };
@@ -350,7 +351,7 @@ I understand Bengali script, Romanized Banglish (e.g. "Goru khabar khacche na ki
                     {aiConfig.provider === 'server-gemini' 
                       ? (serverStatus.checked && !serverStatus.configured 
                           ? 'Demo/FAQ Mode (Key Unset)' 
-                          : `Gemini AI Connected (${serverStatus.model || 'gemini-3.8-flash'})`)
+                          : `Agentic AI Active (${serverStatus.model || 'gemini-3.8-flash'})`)
                       : (aiConfig.provider === 'demo' ? 'Demo/FAQ Mode' : `${aiConfig.provider.toUpperCase()} AI Connected`)}
                   </span>
                 </button>
@@ -573,7 +574,42 @@ I understand Bengali script, Romanized Banglish (e.g. "Goru khabar khacche na ki
                       )}
                     </div>
                   ) : (
-                    <p className="whitespace-pre-line leading-relaxed">{msg.text}</p>
+                    <>
+                      {/* Agent Reasoning & Grounded Tools Trace */}
+                      {!isUser && msg.toolSteps && msg.toolSteps.length > 0 && (
+                        <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-2.5 text-xs text-forest-dark space-y-1.5">
+                          <div className="flex items-center justify-between font-bold text-forest text-[11px]">
+                            <span className="flex items-center space-x-1.5">
+                              <Sparkles className="w-3.5 h-3.5 text-harvest-dark" />
+                              <span>
+                                {language === 'bn' 
+                                  ? `এজেন্টিক বিশ্লেষণ ও টুল যাচাই (${msg.toolSteps.length}টি টুল কার্যকর)` 
+                                  : `Agent Reasoning & Grounded Tools (${msg.toolSteps.length} executed)`}
+                              </span>
+                            </span>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-200/80 text-emerald-900 font-bold">
+                              Verified
+                            </span>
+                          </div>
+                          <div className="space-y-1">
+                            {msg.toolSteps.map((tool, idx) => (
+                              <div key={idx} className="text-[11px] bg-white rounded-lg p-2 border border-emerald-100/90 shadow-2xs flex items-start space-x-2">
+                                <CheckCircle2 className="w-3.5 h-3.5 text-forest mt-0.5 shrink-0" />
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center space-x-2">
+                                    <span className="font-bold text-forest font-mono text-[10px] bg-forest-50 px-1 rounded">{tool.toolName}</span>
+                                    <span className="text-[9px] text-mutedText">{tool.timestamp}</span>
+                                  </div>
+                                  <p className="text-secondaryText text-[11px] mt-0.5 leading-snug">{tool.summaryText}</p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      <p className="whitespace-pre-line leading-relaxed">{msg.text}</p>
+                    </>
                   )}
 
                   {/* Follow-up Question Chips */}
