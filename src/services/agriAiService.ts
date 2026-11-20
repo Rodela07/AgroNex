@@ -367,7 +367,40 @@ export async function getAgriAiResponseAsync(
   const targetLang = resolveResponseLanguage(query, pref);
   const langDetection = detectLanguage(query);
 
-  // If a genuine LLM provider with API key is configured
+  // If configured for Server-Side Secure Gemini (Default)
+  if (config.provider === 'server-gemini') {
+    try {
+      const llmResult = await queryLlmApi(config, query, history, targetLang);
+      return {
+        reply: llmResult.reply,
+        isEmergency: llmResult.isEmergency,
+        actionCard: llmResult.actionCard,
+        isDemoMode: false,
+        providerUsed: 'Google Gemini 1.5 Flash (Server-Secured)',
+        modelUsed: llmResult.modelUsed || 'gemini-1.5-flash',
+        detectedLanguage: langDetection.detected,
+        dominantLanguage: langDetection.dominant
+      };
+    } catch (err: any) {
+      // In local dev without live serverless or if GEMINI_API_KEY is pending in Vercel
+      console.warn('Server Gemini call failed or offline, falling back to AgroNex Expert Synthesis:', err?.message || err);
+      const fallback = synthesizeDemoResponse(query, targetLang, history);
+      return {
+        reply: fallback.reply,
+        isEmergency: fallback.isEmergency,
+        actionCard: fallback.actionCard,
+        isDemoMode: true,
+        providerUsed: 'AgroNex Expert Engine (Fallback)',
+        modelUsed: 'agronex-knowledge-v2',
+        detectedLanguage: langDetection.detected,
+        dominantLanguage: langDetection.dominant,
+        followUpQuestions: fallback.followUpQuestions,
+        sector: fallback.sector
+      };
+    }
+  }
+
+  // If a genuine client LLM provider with API key is configured
   if (config.provider !== 'demo' && config.apiKey && config.apiKey.trim()) {
     try {
       const llmResult = await queryLlmApi(config, query, history, targetLang);

@@ -1,7 +1,7 @@
 // AgroNex Bangladesh - AI Configuration & Provider Service
 // Manages LLM Provider settings, API Keys, and response preferences securely.
 
-export type AiProviderType = 'demo' | 'gemini' | 'openai' | 'groq' | 'openrouter';
+export type AiProviderType = 'server-gemini' | 'demo' | 'gemini' | 'openai' | 'groq' | 'openrouter';
 export type AiResponseLanguagePref = 'auto' | 'bn' | 'en';
 
 export interface AiConfig {
@@ -15,7 +15,7 @@ export interface AiConfig {
 const STORAGE_KEY_CONFIG = 'agronex_ai_config';
 
 export const DEFAULT_AI_CONFIG: AiConfig = {
-  provider: 'demo',
+  provider: 'server-gemini',
   apiKey: '',
   model: 'gemini-1.5-flash',
   responseLanguage: 'auto',
@@ -23,13 +23,16 @@ export const DEFAULT_AI_CONFIG: AiConfig = {
 };
 
 export const PROVIDER_MODELS: Record<AiProviderType, { id: string; name: string }[]> = {
+  'server-gemini': [
+    { id: 'gemini-1.5-flash', name: 'Google Gemini 1.5 Flash (সার্ভার সিকিউরড Vercel API)' }
+  ],
   demo: [
     { id: 'offline-expert-engine', name: 'AgroNex Offline Expert Engine (ডেমো)' }
   ],
   gemini: [
-    { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash (দ্রুত ও নিখরচায় রিকমেন্ডেড)' },
+    { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash (সরাসরি ক্লায়েন্ট এপিআই)' },
     { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash' },
-    { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro (উন্নত বিশ্লেষণ)' }
+    { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro' }
   ],
   openai: [
     { id: 'gpt-4o-mini', name: 'GPT-4o Mini (দ্রুত ও সাশ্রয়ী)' },
@@ -99,13 +102,11 @@ export function resetAiConfig(): AiConfig {
 }
 
 /**
- * Security disclaimer for frontend prototype.
+ * Security disclaimer for AgroNex Server-Side Architecture.
  */
 export const AI_SECURITY_NOTICE = {
-  bn: `⚠️ নিরাপত্তা সতর্কতা (ক্লায়েন্ট-সাইড প্রোটোটাইপ):
-এগ্রোনেক্স বর্তমানে একটি ব্রাউজার-ভিত্তিক প্রোটোটাইপ। আপনি এখানে যে API Key প্রদান করবেন তা কেবল আপনার বর্তমান ব্রাউজারের LocalStorage-এ সংরক্ষিত থাকে এবং ব্রাউজার থেকে সরাসরি সংশ্লিষ্ট এআই প্রোভাইডারের অফিসিয়াল HTTPS এন্ডপয়েন্টে পাঠানো হয়। কোনো তৃতীয় পক্ষের সার্ভারে এটি সংরক্ষণ করা হয় না।
-বাস্তব প্রোডাকশন সিস্টেমে সকল এআই রিকোয়েস্ট একটি সুরক্ষিত ব্যাকএন্ড সার্ভারের মাধ্যমে পরিচালনা করা উচিত।`,
-  en: `⚠️ Security Notice (Client-Side Prototype):
-AgroNex is currently running as a client-side frontend prototype. Any API key entered here is stored exclusively in your local browser LocalStorage and dispatched directly to the official AI provider endpoint over encrypted HTTPS. No third-party server intercepts or stores your key.
-For live production deployments with public users, always proxy AI API calls through an authenticated backend server.`
+  bn: `🛡️ নিরাপদ সার্ভার আর্কিটেকচার (Server-Secured Gemini):
+এগ্রোনেক্স এখন Vercel Serverless Function (/api/chat)-এর মাধ্যমে Google Gemini 1.5 Flash পরিচালনা করে। আপনার আসল Gemini API Key সুরক্ষিতভাবে Vercel Environment Variables (GEMINI_API_KEY)-এ সংরক্ষিত থাকে। ব্রাউজারের নেটওয়ার্ক ট্র্যাফিক, সোর্স কোড কিংবা গিটহাবে কোনো এপিআই কি কখনো দৃশ্যমান বা উন্মুক্ত হয় না।`,
+  en: `🛡️ Secure Server Architecture (Server-Secured Gemini):
+AgroNex routes all AI requests through a Vercel Serverless Function (/api/chat) executing Google Gemini 1.5 Flash. Your Gemini API key is securely stored in Vercel Environment Variables (GEMINI_API_KEY). No API secrets are exposed to the client browser, bundle output, or GitHub.`
 };

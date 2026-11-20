@@ -305,7 +305,7 @@ I understand Bengali script, Romanized Banglish (e.g. "Goru khabar khacche na ki
                   {language === 'bn' ? 'এগ্রোনেক্স এআই সহকারী' : 'AgroNex AI Advisor'}
                 </h3>
                 
-                {/* Provider Pill (Demo vs Live) */}
+                {/* Provider Pill (Server Gemini vs Demo) */}
                 <button
                   onClick={openSettings}
                   className={`px-2 py-0.5 text-[10px] font-bold rounded-full border transition flex items-center space-x-1 ${
@@ -316,7 +316,11 @@ I understand Bengali script, Romanized Banglish (e.g. "Goru khabar khacche na ki
                   title="Configure AI Provider & API Key"
                 >
                   <Cpu className="w-2.5 h-2.5" />
-                  <span>{aiConfig.provider === 'demo' ? 'ডেমো মোড' : aiConfig.model}</span>
+                  <span>
+                    {aiConfig.provider === 'server-gemini' 
+                      ? 'Gemini 1.5 Flash (Server)' 
+                      : (aiConfig.provider === 'demo' ? 'ডেমো ইঞ্জিন' : aiConfig.model)}
+                  </span>
                 </button>
               </div>
 
@@ -662,10 +666,10 @@ I understand Bengali script, Romanized Banglish (e.g. "Goru khabar khacche na ki
               </label>
               <div className="grid grid-cols-2 gap-2">
                 {[
+                  { id: 'server-gemini', name: 'Google Gemini (Server)', desc: 'Vercel Serverless • Recommended' },
                   { id: 'demo', name: 'অফলাইন ডেমো ইঞ্জিন', desc: 'No API key needed' },
-                  { id: 'gemini', name: 'Google Gemini', desc: 'Recommended (Free tier)' },
-                  { id: 'openai', name: 'OpenAI (GPT-4o)', desc: 'Official API' },
-                  { id: 'groq', name: 'Groq Cloud', desc: 'Ultra-fast Llama 3.3' }
+                  { id: 'gemini', name: 'Gemini (Client Key)', desc: 'Direct browser API' },
+                  { id: 'openai', name: 'OpenAI (GPT-4o)', desc: 'Custom OpenAI key' }
                 ].map(prov => (
                   <button
                     key={prov.id}
@@ -692,8 +696,28 @@ I understand Bengali script, Romanized Banglish (e.g. "Goru khabar khacche na ki
               </div>
             </div>
 
-            {/* Model Selection (if not demo) */}
-            {tempConfig.provider !== 'demo' && (
+            {/* Server-Gemini Explanatory Card */}
+            {tempConfig.provider === 'server-gemini' && (
+              <div className="p-3.5 rounded-2xl bg-forest-50 border border-forest/20 text-forest-dark text-xs space-y-2">
+                <div className="font-bold flex items-center space-x-1.5 text-forest">
+                  <CheckCircle2 className="w-4 h-4 text-forest" />
+                  <span>{language === 'bn' ? 'সার্ভার-সাইড সুরক্ষিত কনফিগারেশন' : 'Server-Secured Gemini Integration'}</span>
+                </div>
+                <p className="text-[11px] leading-relaxed text-secondaryText">
+                  {language === 'bn'
+                    ? 'আপনার Gemini API Key সরাসরি Vercel Dashboard-এ Environment Variable হিসেবে সংরক্ষিত থাকে (/api/chat)। এটি ব্রাউজারের নেটওয়ার্ক ট্র্যাফিক কিংবা কোডে কখনো উন্মুক্ত হয় না।'
+                    : 'Your Gemini API key is securely stored in Vercel Environment Variables (/api/chat) and never exposed to the client browser or repository.'}
+                </p>
+                <div className="bg-white/90 p-2.5 rounded-xl text-[11px] font-mono border border-forest/15 space-y-1">
+                  <div><span className="font-bold text-forest">Vercel Env:</span> GEMINI_API_KEY</div>
+                  <div><span className="font-bold text-forest">Active Model:</span> gemini-1.5-flash</div>
+                  <div><span className="font-bold text-forest">Endpoint:</span> /api/chat</div>
+                </div>
+              </div>
+            )}
+
+            {/* Model Selection (for client providers) */}
+            {tempConfig.provider !== 'demo' && tempConfig.provider !== 'server-gemini' && (
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-primaryText">
                   {language === 'bn' ? 'মডেল সংস্করণ:' : 'Model Version:'}
@@ -710,8 +734,8 @@ I understand Bengali script, Romanized Banglish (e.g. "Goru khabar khacche na ki
               </div>
             )}
 
-            {/* API Key Input (if not demo) */}
-            {tempConfig.provider !== 'demo' && (
+            {/* API Key Input (only for client-mode fallback) */}
+            {tempConfig.provider !== 'demo' && tempConfig.provider !== 'server-gemini' && (
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-bold text-primaryText flex items-center space-x-1">
@@ -787,11 +811,11 @@ I understand Bengali script, Romanized Banglish (e.g. "Goru khabar khacche na ki
                   <button
                     type="button"
                     onClick={handleTestConnection}
-                    disabled={isTestingApi || !tempConfig.apiKey}
+                    disabled={isTestingApi || (tempConfig.provider !== 'server-gemini' && !tempConfig.apiKey)}
                     className="btn-secondary py-2 px-3 text-xs rounded-xl disabled:opacity-50 flex items-center space-x-1"
                   >
                     {isTestingApi && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                    <span>{language === 'bn' ? 'সংযোগ পরীক্ষা' : 'Test API'}</span>
+                    <span>{tempConfig.provider === 'server-gemini' ? (language === 'bn' ? 'সার্ভার পরীক্ষা' : 'Test Server') : (language === 'bn' ? 'সংযোগ পরীক্ষা' : 'Test API')}</span>
                   </button>
                 )}
 

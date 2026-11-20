@@ -259,6 +259,66 @@ async function callOpenAiCompatibleApi(
 }
 
 /**
+ * Calls the secure AgroNex Serverless API (/api/chat).
+ * The server securely holds the GEMINI_API_KEY environment variable.
+ */
+export async function queryServerAiApi(
+  query: string,
+  history: ChatMessage[] = [],
+  targetLang: 'bn' | 'en' = 'bn'
+): Promise<LlmCallResult> {
+  const response = await fetch('/api/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      message: query,
+      history,
+      responseLanguage: targetLang
+    })
+  });
+
+  if (!response.ok) {
+    const errJson = await response.json().catch(() => ({}));
+    throw new Error(errJson.error || `Server AI endpoint error (${response.status})`);
+  }
+
+  const json = await response.json();
+  if (!json.success || !json.reply) {
+    throw new Error(json.error || 'Invalid response from server AI endpoint');
+  }
+
+  return {
+    reply: json.reply,
+    isEmergency: !!json.isEmergency,
+    actionCard: json.actionCard,
+    providerUsed: json.provider || 'Google Gemini (Server-Secured)',
+    modelUsed: json.model || 'gemini-1.5-flash'
+  };
+}
+
+/**
+ * Checks serverless backend status and whether GEMINI_API_KEY is configured.
+ */
+export async function checkServerAiStatus(): Promise<{
+  online: boolean;
+  geminiConfigured: boolean;
+  model: string;
+}> {
+  try {
+    const res = await fetch('/api/chat', { method: 'GET' });
+    if (!res.ok) return { online: false, geminiConfigured: false, model: 'gemini-1.5-flash' };
+    const json = await res.json();
+    return {
+      online: json.status === 'online',
+      geminiConfigured: !!json.geminiConfigured,
+      model: json.model || 'gemini-1.5-flash'
+    };
+  } catch {
+    return { online: false, geminiConfigured: false, model: 'gemini-1.5-flash' };
+  }
+}
+
+/**
  * Generic entry point to query the configured LLM API.
  */
 export async function queryLlmApi(
@@ -267,6 +327,10 @@ export async function queryLlmApi(
   history: ChatMessage[],
   targetLang: 'bn' | 'en'
 ): Promise<LlmCallResult> {
+  if (config.provider === 'server-gemini') {
+    return queryServerAiApi(query, history, targetLang);
+  }
+
   if (config.provider === 'gemini') {
     return callGeminiApi(config, query, history, targetLang);
   }
@@ -282,6 +346,33 @@ export async function queryLlmApi(
  * Tests connection to the chosen AI provider.
  */
 export async function testAiConnection(config: AiConfig): Promise<{ success: boolean; message: string }> {
+  if (config.provider === 'server-gemini') {
+    try {
+      const status = await checkServerAiStatus();
+      if (!status.online) {
+        return {
+          success: false,
+          message: 'Server API endpoint /api/chat is not reachable (check Vercel deployment or run "vercel dev").'
+        };
+      }
+      if (!status.geminiConfigured) {
+        return {
+          success: false,
+          message: 'Server is online, but GEMINI_API_KEY is not configured in Vercel Environment Variables.'
+        };
+      }
+      return {
+        success: true,
+        message: `Secure Server Connection Verified (Google Gemini ${status.model})`
+      };
+    } catch (err: any) {
+      return {
+        success: false,
+        message: err.message || 'Server check failed.'
+      };
+    }
+  }
+
   if (!config.apiKey && config.provider !== 'demo') {
     return {
       success: false,
