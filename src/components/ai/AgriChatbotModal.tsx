@@ -12,16 +12,31 @@ import {
   AlertTriangle, 
   RotateCcw, 
   ChevronRight, 
-  Sprout, 
-  Beef, 
-  Fish, 
-  TrendingUp, 
   Globe,
   Maximize2,
   Minimize2,
-  CheckCircle2
+  Settings,
+  Key,
+  Eye,
+  EyeOff,
+  Cpu,
+  CheckCircle2,
+  HelpCircle,
+  ShieldAlert,
+  Loader2
 } from 'lucide-react';
-import { ChatMessage, getAgriAiResponse } from '../../services/agriAiService';
+import { ChatMessage, getAgriAiResponseAsync } from '../../services/agriAiService.ts';
+import { 
+  getAiConfig, 
+  saveAiConfig, 
+  resetAiConfig, 
+  PROVIDER_MODELS, 
+  AI_SECURITY_NOTICE, 
+  AiConfig, 
+  AiProviderType, 
+  AiResponseLanguagePref 
+} from '../../services/aiConfigService.ts';
+import { testAiConnection } from '../../services/llmClient.ts';
 
 interface AgriChatbotModalProps {
   isOpen: boolean;
@@ -38,16 +53,32 @@ export const AgriChatbotModal: React.FC<AgriChatbotModalProps> = ({
 }) => {
   const { language, setLanguage, showToast } = useApp();
 
+  // AI Configuration state
+  const [aiConfig, setAiConfig] = useState<AiConfig>(() => getAiConfig());
+  const [responseLangPref, setResponseLangPref] = useState<AiResponseLanguagePref>(() => aiConfig.responseLanguage || 'auto');
+  
+  // Settings Dialog state
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [tempConfig, setTempConfig] = useState<AiConfig>(aiConfig);
+  const [showApiKey, setShowApiKey] = useState(false);
+  const [isTestingApi, setIsTestingApi] = useState(false);
+  const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
+
+  // Chat conversation state
   const [messages, setMessages] = useState<ChatMessage[]>(() => [
     {
       id: 'welcome_1',
       sender: 'ai',
       text: language === 'bn'
         ? `আসসালামু আলাইকুম! আমি এগ্রোনেক্সের কৃত্রিম বুদ্ধিমত্তা সম্পন্ন কৃষি সহকারী।
-ফসল চাষ, সার প্রয়োগ মাত্রা, পশু-পাখির রোগ ও চিকিৎসা, মাছের পুকুর পরিচর্যা কিংবা আজকের পাইকারি বাজারদর সম্পর্কিত যেকোনো প্রশ্ন আমাকে করতে পারেন। নিচের বোতামগুলোতে চাপ দিয়েও প্রশ্ন করতে পারেন!`
-        : `Welcome! I am your AgroNex AI Agriculture Advisor.
-Ask me anything regarding crops, BARC fertilizer dosages, livestock diseases, fish pond water quality, or wholesale regional market prices in plain Bangla or English.`,
-      timestamp: 'এখন'
+আমি বাংলা লিপি, রোমানাইজড বাংলিশ (যেমন: "Amar dhan pata holud hoye jacche") এবং ইংরেজি তিনটি ভাষাতেই কৃষি, পশু-পাখি, মৎস্য ও বাজারদরের প্রশ্নের উত্তর দিতে পারি।
+
+কোন বিষয়ে সহায়তা প্রয়োজন? নিচের বাটনে চাপ দিন অথবা সরাসরি প্রশ্ন লিখুন!`
+        : `Welcome! I am your AgroNex Multilingual Agricultural AI Advisor.
+I understand Bengali script, Romanized Banglish (e.g. "Goru khabar khacche na ki korbo"), and English. Ask me anything regarding crops, diseases, livestock, pond water, or wholesale prices!`,
+      timestamp: 'এখন',
+      isDemoMode: aiConfig.provider === 'demo',
+      providerUsed: aiConfig.provider === 'demo' ? 'Demo Mode' : aiConfig.provider.toUpperCase()
     }
   ]);
 
@@ -83,7 +114,7 @@ Ask me anything regarding crops, BARC fertilizer dosages, livestock diseases, fi
     try {
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = language === 'bn' ? 'bn-BD' : 'en-US';
+      utterance.lang = responseLangPref === 'en' ? 'en-US' : 'bn-BD';
       utterance.rate = 0.95;
       window.speechSynthesis.speak(utterance);
     } catch (e) {
@@ -91,7 +122,19 @@ Ask me anything regarding crops, BARC fertilizer dosages, livestock diseases, fi
     }
   };
 
-  const handleSendMessage = (queryText: string) => {
+  // Change Response Language Preference
+  const handleResponseLangChange = (pref: AiResponseLanguagePref) => {
+    setResponseLangPref(pref);
+    const updated = saveAiConfig({ responseLanguage: pref });
+    setAiConfig(updated);
+    showToast(
+      pref === 'auto' ? 'ভাষা: স্বয়ংক্রিয় নির্বাচন' : (pref === 'bn' ? 'ভাষা: বাংলা নির্ধারণ করা হয়েছে' : 'Language: English set'),
+      'info'
+    );
+  };
+
+  // Send message to AI engine
+  const handleSendMessage = async (queryText: string) => {
     if (!queryText.trim()) return;
 
     const userMsg: ChatMessage = {
@@ -101,13 +144,15 @@ Ask me anything regarding crops, BARC fertilizer dosages, livestock diseases, fi
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
 
-    setMessages(prev => [...prev, userMsg]);
+    const updatedHistory = [...messages, userMsg];
+    setMessages(updatedHistory);
     setInput('');
     setIsTyping(true);
 
-    // Realistic typing delay for AI response
-    setTimeout(() => {
-      const response = getAgriAiResponse(queryText, language);
+    try {
+      const response = await getAgriAiResponseAsync(queryText, updatedHistory, {
+        responseLanguage: responseLangPref
+      });
 
       const aiMsg: ChatMessage = {
         id: `ai_${Date.now()}`,
@@ -115,7 +160,10 @@ Ask me anything regarding crops, BARC fertilizer dosages, livestock diseases, fi
         text: response.reply,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         isEmergency: response.isEmergency,
-        actionCard: response.actionCard
+        isDemoMode: response.isDemoMode,
+        providerUsed: response.providerUsed,
+        actionCard: response.actionCard,
+        followUpQuestions: response.followUpQuestions
       };
 
       setMessages(prev => [...prev, aiMsg]);
@@ -124,7 +172,17 @@ Ask me anything regarding crops, BARC fertilizer dosages, livestock diseases, fi
       if (speechEnabled) {
         speakText(response.reply);
       }
-    }, 600);
+    } catch (err: any) {
+      setIsTyping(false);
+      const errMsg: ChatMessage = {
+        id: `ai_err_${Date.now()}`,
+        sender: 'ai',
+        text: `দুঃখিত, এআই প্রসেসিংয়ে একটি সমস্যা হয়েছে: ${err.message || 'অজানা ত্রুটি'}। পুনরায় চেষ্টা করুন।`,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        isDemoMode: true
+      };
+      setMessages(prev => [...prev, errMsg]);
+    }
   };
 
   const handleVoiceInputSimulate = () => {
@@ -140,12 +198,13 @@ Ask me anything regarding crops, BARC fertilizer dosages, livestock diseases, fi
       setTimeout(() => {
         setIsListening(false);
         const sampleVoiceQueries = language === 'bn' ? [
+          'Amar dhan gach er pata holud hoye jacche, ki korbo?',
           'বোরো ধানের সার প্রয়োগ মাত্রা কত?',
           'আলুর নাবি ধসা রোগ হলে কি করব?',
-          'পুকুরে ভোরে মাছ ভেসে উঠছে কেন?',
-          'গাভীর দুধ বৃদ্ধির সহজ খাবার কি?'
+          'Goru khabar khacche na ar durbol hoye geche.',
+          'Amar pukurer mach gula upore uthe thake keno?'
         ] : [
-          'What is the fertilizer dose for Boro rice?',
+          'My rice leaves are turning yellow. What should I do?',
           'How to treat potato late blight?',
           'Why are fish gasping at the pond surface?'
         ];
@@ -166,11 +225,54 @@ Ask me anything regarding crops, BARC fertilizer dosages, livestock diseases, fi
         id: `reset_${Date.now()}`,
         sender: 'ai',
         text: language === 'bn'
-          ? 'কথোপকথন পরিষ্কার করা হয়েছে। যেকোনো নতুন কৃষি প্রশ্ন করতে পারেন।'
-          : 'Chat history cleared. Feel free to ask any agricultural question.',
-        timestamp: 'এখন'
+          ? 'কথোপকথন পরিষ্কার করা হয়েছে। বাংলা, বাংলিশ বা ইংরেজিতে যেকোনো প্রশ্ন করতে পারেন।'
+          : 'Chat history cleared. Feel free to ask any agricultural question in Bangla, Banglish, or English.',
+        timestamp: 'এখন',
+        isDemoMode: aiConfig.provider === 'demo'
       }
     ]);
+  };
+
+  // Open Settings Modal
+  const openSettings = () => {
+    setTempConfig(getAiConfig());
+    setTestResult(null);
+    setIsSettingsOpen(true);
+  };
+
+  // Test API Connection
+  const handleTestConnection = async () => {
+    setIsTestingApi(true);
+    setTestResult(null);
+    try {
+      const res = await testAiConnection(tempConfig);
+      setTestResult(res);
+    } catch (e: any) {
+      setTestResult({ success: false, message: e.message || 'Error testing connection' });
+    } finally {
+      setIsTestingApi(false);
+    }
+  };
+
+  // Save Settings
+  const handleSaveSettings = () => {
+    const saved = saveAiConfig(tempConfig);
+    setAiConfig(saved);
+    setResponseLangPref(saved.responseLanguage || 'auto');
+    setIsSettingsOpen(false);
+    showToast(
+      saved.provider === 'demo' ? 'ডেমো মোড সক্রিয় করা হয়েছে' : `${saved.provider.toUpperCase()} এআই সফলভাবে সংরক্ষিত হয়েছে`,
+      'success'
+    );
+  };
+
+  // Reset to Demo
+  const handleResetSettings = () => {
+    const res = resetAiConfig();
+    setTempConfig(res);
+    setAiConfig(res);
+    setResponseLangPref('auto');
+    setTestResult({ success: true, message: 'Reset to default Offline Demo Mode.' });
   };
 
   if (!isOpen) return null;
@@ -181,37 +283,60 @@ Ask me anything regarding crops, BARC fertilizer dosages, livestock diseases, fi
         className={`bg-white w-full flex flex-col shadow-2xl transition-all duration-200 overflow-hidden ${
           isFullScreen 
             ? 'h-full max-h-screen rounded-none' 
-            : 'h-[90vh] sm:h-[620px] max-w-2xl sm:rounded-3xl border border-softBorder'
+            : 'h-[92vh] sm:h-[650px] max-w-2xl sm:rounded-3xl border border-softBorder'
         }`}
       >
         
         {/* Header Bar */}
-        <div className="bg-gradient-to-r from-forest to-forest-dark text-white p-3.5 sm:p-4 flex items-center justify-between shadow-xs">
+        <div className="bg-gradient-to-r from-forest to-forest-dark text-white p-3.5 sm:p-4 flex items-center justify-between shadow-xs shrink-0">
           <div className="flex items-center space-x-3">
             <div className="relative">
               <div className="w-10 h-10 rounded-2xl bg-white/15 border border-white/20 flex items-center justify-center text-white">
                 <Bot className="w-6 h-6 text-forest-leaf" />
               </div>
-              <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-400 border-2 border-forest rounded-full" />
+              <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 border-2 border-forest rounded-full ${
+                aiConfig.provider === 'demo' ? 'bg-amber-400' : 'bg-emerald-400 animate-pulse'
+              }`} />
             </div>
 
             <div>
               <div className="flex items-center space-x-2">
                 <h3 className="font-bold text-sm sm:text-base leading-tight">
-                  {language === 'bn' ? 'কৃষি এআই সহকারী (Agri AI)' : 'Agri AI Smart Assistant'}
+                  {language === 'bn' ? 'এগ্রোনেক্স এআই সহকারী' : 'AgroNex AI Advisor'}
                 </h3>
-                <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-forest-leaf/25 text-forest-leaf border border-forest-leaf/40">
-                  ২৪/৭ সক্রিয়
-                </span>
+                
+                {/* Provider Pill (Demo vs Live) */}
+                <button
+                  onClick={openSettings}
+                  className={`px-2 py-0.5 text-[10px] font-bold rounded-full border transition flex items-center space-x-1 ${
+                    aiConfig.provider === 'demo'
+                      ? 'bg-amber-500/20 text-amber-200 border-amber-400/40 hover:bg-amber-500/30'
+                      : 'bg-emerald-500/20 text-emerald-200 border-emerald-400/40 hover:bg-emerald-500/30'
+                  }`}
+                  title="Configure AI Provider & API Key"
+                >
+                  <Cpu className="w-2.5 h-2.5" />
+                  <span>{aiConfig.provider === 'demo' ? 'ডেমো মোড' : aiConfig.model}</span>
+                </button>
               </div>
-              <p className="text-[11px] text-rice/75 mt-0.5">
-                {language === 'bn' ? 'বাংলা ও ইংরেজিতে কৃষি, পশু ও মাছের সমাধান' : 'Bilingual crop, livestock & fisheries intelligence'}
+
+              <p className="text-[11px] text-rice/80 mt-0.5">
+                {language === 'bn' ? 'বাংলা • Banglish • English ত্রিভাষিক বুদ্ধিমত্তা' : 'Trilingual Crop, Livestock & Fisheries Intelligence'}
               </p>
             </div>
           </div>
 
           {/* Header Controls */}
           <div className="flex items-center space-x-1 sm:space-x-1.5">
+            {/* AI Settings Gear */}
+            <button
+              onClick={openSettings}
+              className="p-2 text-white/80 hover:text-white hover:bg-white/15 rounded-xl transition"
+              title="এআই সেটিংস ও এপিআই কি (AI Settings)"
+            >
+              <Settings className="w-4 h-4" />
+            </button>
+
             {/* Read aloud toggle */}
             <button
               onClick={() => {
@@ -224,16 +349,6 @@ Ask me anything regarding crops, BARC fertilizer dosages, livestock diseases, fi
               title={speechEnabled ? (language === 'bn' ? 'ভয়েস বন্ধ করুন' : 'Mute voice') : (language === 'bn' ? 'ভয়েস চালু করুন' : 'Enable voice')}
             >
               {speechEnabled ? <Volume2 className="w-4 h-4 text-forest-leaf" /> : <VolumeX className="w-4 h-4" />}
-            </button>
-
-            {/* Language toggle inside chat */}
-            <button
-              onClick={() => setLanguage(language === 'bn' ? 'en' : 'bn')}
-              className="px-2.5 py-1 rounded-xl bg-white/15 hover:bg-white/25 text-xs font-bold transition flex items-center space-x-1"
-              title="Toggle Language"
-            >
-              <Globe className="w-3.5 h-3.5" />
-              <span>{language === 'bn' ? 'বাংলা' : 'EN'}</span>
             </button>
 
             {/* Clear chat */}
@@ -269,27 +384,55 @@ Ask me anything regarding crops, BARC fertilizer dosages, livestock diseases, fi
           </div>
         </div>
 
+        {/* Response Language Preference Selector */}
+        <div className="bg-rice border-b border-softBorder px-3.5 py-1.5 flex items-center justify-between text-xs shrink-0">
+          <div className="flex items-center space-x-1.5 text-secondaryText text-[11px] font-semibold">
+            <Globe className="w-3.5 h-3.5 text-forest" />
+            <span>{language === 'bn' ? 'উত্তর দেওয়ার ভাষা:' : 'Response Language:'}</span>
+          </div>
+
+          <div className="flex items-center p-0.5 bg-white border border-softBorder rounded-xl shadow-2xs">
+            {(['auto', 'bn', 'en'] as AiResponseLanguagePref[]).map((pref) => {
+              const isActive = responseLangPref === pref;
+              const label = pref === 'auto' ? (language === 'bn' ? 'স্বয়ংক্রিয় (Auto)' : 'Auto Detect') : (pref === 'bn' ? 'বাংলা' : 'English');
+              return (
+                <button
+                  key={pref}
+                  onClick={() => handleResponseLangChange(pref)}
+                  className={`px-2.5 py-0.5 text-[11px] font-bold rounded-lg transition ${
+                    isActive 
+                      ? 'bg-forest text-white shadow-xs' 
+                      : 'text-secondaryText hover:text-primaryText hover:bg-forest-50'
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         {/* Suggestion Pills Banner for Basic-Level Users */}
         <div className="bg-forest-50/70 border-b border-softBorder px-3.5 py-2 overflow-x-auto scrollbar-none flex items-center gap-1.5 shrink-0">
           <span className="text-[11px] font-bold text-forest shrink-0 flex items-center space-x-1 mr-1">
             <Sparkles className="w-3 h-3 text-harvest-dark" />
-            <span>{language === 'bn' ? 'সহজ প্রশ্নসমূহ:' : 'Quick Questions:'}</span>
+            <span>{language === 'bn' ? 'উদাহরণ প্রশ্নসমূহ:' : 'Quick Questions:'}</span>
           </span>
 
           {[
-            { bn: 'বোরো ধানের সার প্রয়োগ মাত্রা?', en: 'Boro rice fertilizer dose?' },
-            { bn: 'আলুর নাবি ধসা রোগের প্রতিকার?', en: 'How to control potato late blight?' },
-            { bn: 'পুকুরে সকালে মাছ ভেসে উঠছে কেন?', en: 'Fish gasping at pond surface?' },
-            { bn: 'গাভীর দুধ বৃদ্ধির সহজ উপায়?', en: 'How to increase dairy milk yield?' },
-            { bn: 'আজকের পাইকারি বাজারদর কেমন?', en: 'Today\'s wholesale market rates?' },
-            { bn: '🚨 ক্ষুরারোগের লক্ষণ ও করণীয়?', en: '🚨 FMD disease emergency actions?' }
+            { label: 'Amar dhan gach er pata holud', query: 'Amar dhan gach er pata holud hoye jacche, ki korbo?' },
+            { label: 'ধানের বাদামি দাগ রোগ', query: 'আমার ধানের পাতায় বাদামি দাগ দেখা যাচ্ছে।' },
+            { label: 'Goru khabar khacche na', query: 'Goru khabar khacche na ar durbol hoye geche.' },
+            { label: 'মাছ সকালে ভেসে উঠছে', query: 'Amar pukurer mach gula upore uthe thake keno?' },
+            { label: 'Tomato gach e poka', query: 'Tomato gach e poka dhorse, kono upay ache?' },
+            { label: 'Calculate Fertilizer', query: 'How can I calculate fertilizer requirements for my land?' }
           ].map((item, idx) => (
             <button
               key={idx}
-              onClick={() => handleSendMessage(language === 'bn' ? item.bn : item.en)}
+              onClick={() => handleSendMessage(item.query)}
               className="px-2.5 py-1 rounded-xl bg-white border border-forest/20 text-[11px] font-medium text-forest-dark hover:bg-forest hover:text-white hover:border-forest transition whitespace-nowrap shadow-2xs shrink-0 active:scale-95"
             >
-              {language === 'bn' ? item.bn : item.en}
+              {item.label}
             </button>
           ))}
         </div>
@@ -307,10 +450,20 @@ Ask me anything regarding crops, BARC fertilizer dosages, livestock diseases, fi
                   <span>{isUser ? (language === 'bn' ? 'আপনি' : 'You') : (language === 'bn' ? 'এগ্রোনেক্স এআই' : 'AgroNex AI')}</span>
                   <span>•</span>
                   <span>{msg.timestamp}</span>
+                  {!isUser && (
+                    <>
+                      <span>•</span>
+                      <span className={`px-1.5 py-0.2 rounded font-semibold ${
+                        msg.isDemoMode ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'
+                      }`}>
+                        {msg.isDemoMode ? 'Demo Mode' : (msg.providerUsed || 'Live LLM')}
+                      </span>
+                    </>
+                  )}
                 </div>
 
                 <div 
-                  className={`max-w-[88%] sm:max-w-[80%] p-3.5 sm:p-4 rounded-2xl text-xs sm:text-sm leading-relaxed shadow-2xs ${
+                  className={`max-w-[88%] sm:max-w-[82%] p-3.5 sm:p-4 rounded-2xl text-xs sm:text-sm leading-relaxed shadow-2xs ${
                     isUser 
                       ? 'bg-forest text-white rounded-tr-xs font-medium' 
                       : 'bg-white text-primaryText border border-softBorder rounded-tl-xs space-y-2.5'
@@ -318,13 +471,41 @@ Ask me anything regarding crops, BARC fertilizer dosages, livestock diseases, fi
                 >
                   {/* Emergency Warning Badge */}
                   {msg.isEmergency && (
-                    <div className="p-2 rounded-xl bg-red-50 border border-red-200 text-status-error flex items-center space-x-1.5 text-xs font-bold mb-1">
-                      <AlertTriangle className="w-4 h-4 shrink-0" />
-                      <span>{language === 'bn' ? 'জরুরি রোগ সংকট সনাক্ত হয়েছে!' : 'Critical Agricultural Emergency Detected!'}</span>
+                    <div className="p-2.5 rounded-xl bg-red-50 border border-red-300 text-status-error flex items-start space-x-2 text-xs font-bold mb-1">
+                      <AlertTriangle className="w-4 h-4 shrink-0 text-status-error mt-0.5" />
+                      <div>
+                        <div className="font-bold">{language === 'bn' ? '🚨 জরুরি সংকট সনাক্ত হয়েছে!' : '🚨 Critical Agricultural Emergency Detected!'}</div>
+                        <div className="text-[11px] font-normal text-status-error/90 mt-0.5">
+                          {language === 'bn' 
+                            ? 'কালবিলম্ব না করে বিশেষজ্ঞ চিকিৎসক বা কর্মকর্তার জরুরি সহায়তা নিন।' 
+                            : 'Immediate on-site intervention or certified veterinary/agronomy consultation is recommended.'}
+                        </div>
+                      </div>
                     </div>
                   )}
 
-                  <p className="whitespace-pre-line">{msg.text}</p>
+                  <p className="whitespace-pre-line leading-relaxed">{msg.text}</p>
+
+                  {/* Follow-up Question Chips */}
+                  {!isUser && msg.followUpQuestions && msg.followUpQuestions.length > 0 && (
+                    <div className="pt-2 border-t border-softBorder/60 space-y-1.5">
+                      <div className="text-[10px] font-bold text-forest uppercase tracking-wider flex items-center space-x-1">
+                        <Sparkles className="w-3 h-3 text-harvest" />
+                        <span>{language === 'bn' ? 'সম্পর্কিত ফলো-আপ প্রশ্ন:' : 'Relevant Follow-up Questions:'}</span>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {msg.followUpQuestions.map((fq, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => handleSendMessage(fq)}
+                            className="text-[11px] px-2.5 py-1 rounded-xl bg-forest-50 hover:bg-forest hover:text-white text-forest-dark border border-forest/20 transition text-left active:scale-95"
+                          >
+                            {fq} →
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Read Aloud button on individual response */}
                   {!isUser && (
@@ -339,7 +520,7 @@ Ask me anything regarding crops, BARC fertilizer dosages, livestock diseases, fi
                       </button>
 
                       <span className="text-[10px] text-mutedText">
-                        {language === 'bn' ? 'বিএআরসি ও ডিএই নির্দেশিকা' : 'BARC & DAE Verified'}
+                        {language === 'bn' ? 'বিএআরসি, বিআরআরআই ও বিএলআরআই সমর্থিত' : 'BARC, BRRI & BLRI Standard'}
                       </span>
                     </div>
                   )}
@@ -383,7 +564,7 @@ Ask me anything regarding crops, BARC fertilizer dosages, livestock diseases, fi
         </div>
 
         {/* Bottom Input Form */}
-        <div className="p-3 sm:p-4 bg-white border-t border-softBorder">
+        <div className="p-3 sm:p-4 bg-white border-t border-softBorder shrink-0">
           <form 
             onSubmit={(e) => {
               e.preventDefault();
@@ -412,8 +593,8 @@ Ask me anything regarding crops, BARC fertilizer dosages, livestock diseases, fi
               onChange={(e) => setInput(e.target.value)}
               placeholder={
                 language === 'bn' 
-                  ? 'যেকোনো কৃষি বা খামারের প্রশ্ন লিখুন (যেমন: আলুর রোগ, ধানের সার)...' 
-                  : 'Type your farming question (e.g. Rice neck blast, potato fertilizer)...'
+                  ? 'বাংলা, Banglish বা ইংরেজিতে লিখুন (যেমন: ধান পাতা হলুদ, goru khacche na)...' 
+                  : 'Ask in Bangla, Banglish, or English (e.g. Yellow leaves, fish gasping)...'
               }
               className="input-field py-3 text-xs sm:text-sm font-medium flex-1 rounded-2xl"
             />
@@ -429,14 +610,205 @@ Ask me anything regarding crops, BARC fertilizer dosages, livestock diseases, fi
             </button>
           </form>
 
-          <p className="text-[10px] text-center text-mutedText mt-2">
-            {language === 'bn' 
-              ? 'কৃষি তথ্য বিএআরসি ও কৃষি সম্প্রসারণ অধিদপ্তর দ্বারা যাচাইকৃত।' 
-              : 'Agricultural intelligence verified by BARC and DAE.'}
-          </p>
+          <div className="flex items-center justify-between text-[10px] text-mutedText mt-2 px-1">
+            <span>
+              {aiConfig.provider === 'demo' 
+                ? (language === 'bn' ? 'অফলাইন ডেমো ইঞ্জিন সক্রিয় (সেটিংসে গিয়ে নিজস্ব এআই যুক্ত করতে পারেন)' : 'Offline Demo Engine Active (configure real LLM in Settings)')
+                : (language === 'bn' ? `${aiConfig.provider.toUpperCase()} এআই লাইভ সক্রিয়` : `Live ${aiConfig.provider.toUpperCase()} active`)}
+            </span>
+            <button
+              type="button"
+              onClick={openSettings}
+              className="text-forest hover:underline font-bold"
+            >
+              {language === 'bn' ? '⚙️ এআই কনফিগারেশন' : '⚙️ AI Settings'}
+            </button>
+          </div>
         </div>
 
       </div>
+
+      {/* AI Settings & API Key Modal Dialog */}
+      {isSettingsOpen && (
+        <div className="fixed inset-0 z-60 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-5 sm:p-6 shadow-2xl border border-softBorder space-y-4 max-h-[90vh] overflow-y-auto">
+            
+            <div className="flex items-center justify-between pb-3 border-b border-softBorder">
+              <div className="flex items-center space-x-2">
+                <div className="p-2 rounded-xl bg-forest/10 text-forest">
+                  <Settings className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-primaryText text-base">
+                    {language === 'bn' ? 'এগ্রোনেক্স এআই কনফিগারেশন' : 'AgroNex AI Engine Settings'}
+                  </h4>
+                  <p className="text-xs text-mutedText">
+                    {language === 'bn' ? 'ডেমো ইঞ্জিন বা নিজস্ব এআই মডেল যুক্ত করুন' : 'Switch between Demo Mode and Live LLM APIs'}
+                  </p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setIsSettingsOpen(false)}
+                className="p-1.5 text-secondaryText hover:text-primaryText rounded-xl hover:bg-forest-50"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Provider Selection */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-primaryText">
+                {language === 'bn' ? 'এআই প্রোভাইডার নির্বাচন করুন:' : 'Select AI Provider:'}
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { id: 'demo', name: 'অফলাইন ডেমো ইঞ্জিন', desc: 'No API key needed' },
+                  { id: 'gemini', name: 'Google Gemini', desc: 'Recommended (Free tier)' },
+                  { id: 'openai', name: 'OpenAI (GPT-4o)', desc: 'Official API' },
+                  { id: 'groq', name: 'Groq Cloud', desc: 'Ultra-fast Llama 3.3' }
+                ].map(prov => (
+                  <button
+                    key={prov.id}
+                    type="button"
+                    onClick={() => {
+                      const firstModel = PROVIDER_MODELS[prov.id as AiProviderType]?.[0]?.id || '';
+                      setTempConfig(prev => ({
+                        ...prev,
+                        provider: prov.id as AiProviderType,
+                        model: firstModel
+                      }));
+                      setTestResult(null);
+                    }}
+                    className={`p-2.5 rounded-2xl border text-left transition ${
+                      tempConfig.provider === prov.id
+                        ? 'border-forest bg-forest/5 text-forest font-bold ring-2 ring-forest/20'
+                        : 'border-softBorder hover:border-forest/40 bg-white text-secondaryText'
+                    }`}
+                  >
+                    <div className="text-xs">{prov.name}</div>
+                    <div className="text-[10px] text-mutedText font-normal mt-0.5">{prov.desc}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Model Selection (if not demo) */}
+            {tempConfig.provider !== 'demo' && (
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-primaryText">
+                  {language === 'bn' ? 'মডেল সংস্করণ:' : 'Model Version:'}
+                </label>
+                <select
+                  value={tempConfig.model}
+                  onChange={(e) => setTempConfig(prev => ({ ...prev, model: e.target.value }))}
+                  className="input-field py-2 text-xs rounded-xl w-full"
+                >
+                  {(PROVIDER_MODELS[tempConfig.provider] || []).map(m => (
+                    <option key={m.id} value={m.id}>{m.name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* API Key Input (if not demo) */}
+            {tempConfig.provider !== 'demo' && (
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-primaryText flex items-center space-x-1">
+                    <Key className="w-3.5 h-3.5 text-forest" />
+                    <span>{language === 'bn' ? 'এপিআই কি (API Key):' : 'Provider API Key:'}</span>
+                  </label>
+                  {tempConfig.provider === 'gemini' && (
+                    <a
+                      href="https://aistudio.google.com/app/apikey"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-[11px] text-forest hover:underline font-bold"
+                    >
+                      Google AI Studio Key পান ↗
+                    </a>
+                  )}
+                </div>
+
+                <div className="relative">
+                  <input
+                    type={showApiKey ? 'text' : 'password'}
+                    value={tempConfig.apiKey}
+                    onChange={(e) => setTempConfig(prev => ({ ...prev, apiKey: e.target.value }))}
+                    placeholder={`Enter your ${tempConfig.provider.toUpperCase()} API key...`}
+                    className="input-field py-2.5 pr-10 text-xs font-mono rounded-xl w-full"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowApiKey(!showApiKey)}
+                    className="absolute right-3 top-2.5 text-mutedText hover:text-primaryText"
+                  >
+                    {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Security Notice */}
+            <div className="p-3 rounded-2xl bg-amber-50/90 border border-amber-200 text-amber-900 text-[11px] space-y-1">
+              <div className="flex items-center space-x-1.5 font-bold">
+                <ShieldAlert className="w-4 h-4 text-amber-700 shrink-0" />
+                <span>{language === 'bn' ? 'ক্লায়েন্ট-সাইড নিরাপত্তা নোটিশ' : 'Client-Side Security Notice'}</span>
+              </div>
+              <p className="leading-relaxed text-amber-800">
+                {language === 'bn' ? AI_SECURITY_NOTICE.bn : AI_SECURITY_NOTICE.en}
+              </p>
+            </div>
+
+            {/* Test Connection Result */}
+            {testResult && (
+              <div className={`p-2.5 rounded-2xl text-xs font-medium border flex items-center space-x-2 ${
+                testResult.success
+                  ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                  : 'bg-red-50 text-red-800 border-red-200'
+              }`}>
+                {testResult.success ? <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" /> : <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />}
+                <span>{testResult.message}</span>
+              </div>
+            )}
+
+            {/* Modal Action Buttons */}
+            <div className="pt-2 flex items-center justify-between border-t border-softBorder">
+              <button
+                type="button"
+                onClick={handleResetSettings}
+                className="btn-secondary py-2 px-3 text-xs rounded-xl text-mutedText hover:text-red-600"
+              >
+                {language === 'bn' ? 'ডিফল্ট রিসেট' : 'Reset to Demo'}
+              </button>
+
+              <div className="flex items-center space-x-2">
+                {tempConfig.provider !== 'demo' && (
+                  <button
+                    type="button"
+                    onClick={handleTestConnection}
+                    disabled={isTestingApi || !tempConfig.apiKey}
+                    className="btn-secondary py-2 px-3 text-xs rounded-xl disabled:opacity-50 flex items-center space-x-1"
+                  >
+                    {isTestingApi && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                    <span>{language === 'bn' ? 'সংযোগ পরীক্ষা' : 'Test API'}</span>
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  onClick={handleSaveSettings}
+                  className="btn-primary py-2 px-4 text-xs rounded-xl shadow-xs"
+                >
+                  {language === 'bn' ? 'সংরক্ষণ করুন' : 'Save Settings'}
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

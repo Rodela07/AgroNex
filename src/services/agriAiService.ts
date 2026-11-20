@@ -1,5 +1,11 @@
 // AgroNex Bangladesh - Comprehensive Agricultural AI Knowledge Engine
-// Bilingual: Bengali (বাংলা) & English. Handles farming, livestock, fisheries, fertilizers, diseases, and market advice.
+// Multilingual: Bengali script (বাংলা), Romanized Banglish, and English.
+// Powered by Dynamic Heuristic Synthesis & Genuine LLM API integrations (Gemini, OpenAI, Groq).
+
+import { getAiConfig } from './aiConfigService.ts';
+import { detectLanguage, resolveResponseLanguage } from './aiLanguageDetector.ts';
+import { synthesizeDemoResponse } from './aiKnowledgeSynthesizer.ts';
+import { queryLlmApi } from './llmClient.ts';
 
 export interface ChatMessage {
   id: string;
@@ -7,6 +13,9 @@ export interface ChatMessage {
   text: string;
   timestamp: string;
   isEmergency?: boolean;
+  isDemoMode?: boolean;
+  providerUsed?: string;
+  followUpQuestions?: string[];
   actionCard?: {
     type: 'fertilizer' | 'vet_booking' | 'expert_booking' | 'market_prices' | 'disease_guide';
     labelBn: string;
@@ -14,6 +23,19 @@ export interface ChatMessage {
     tab: string;
     subtab?: string;
   };
+}
+
+export interface AiResponseResult {
+  reply: string;
+  isEmergency: boolean;
+  isDemoMode: boolean;
+  providerUsed: string;
+  modelUsed: string;
+  detectedLanguage: string;
+  dominantLanguage: 'bn' | 'en';
+  actionCard?: ChatMessage['actionCard'];
+  followUpQuestions?: string[];
+  sector?: string;
 }
 
 interface KnowledgeTopic {
@@ -303,70 +325,96 @@ Tip: List directly on AgroNex Marketplace to bypass middlemen. Set price alerts 
   }
 ];
 
-export function getAgriAiResponse(query: string, language: 'bn' | 'en' = 'bn'): {
+/**
+ * Synchronous Agricultural AI response function (backward compatible with audit test suite).
+ * Dynamically synthesizes context-aware agricultural intelligence.
+ */
+export function getAgriAiResponse(
+  query: string,
+  language: 'bn' | 'en' = 'bn'
+): {
   reply: string;
   isEmergency: boolean;
   actionCard?: ChatMessage['actionCard'];
 } {
-  const normalized = query.toLowerCase().trim();
+  const targetLang = resolveResponseLanguage(query, language);
+  const synthesized = synthesizeDemoResponse(query, targetLang, []);
+  
+  return {
+    reply: synthesized.reply,
+    isEmergency: synthesized.isEmergency,
+    actionCard: synthesized.actionCard
+  };
+}
 
-  // Search through knowledge base for matching keywords
-  let bestMatch: KnowledgeTopic | null = null;
-  let maxScore = 0;
+/**
+ * Asynchronous Agricultural AI response function.
+ * Supports:
+ * 1. Multi-turn chat history context
+ * 2. Language preference ('auto' | 'bn' | 'en')
+ * 3. Genuine LLM APIs (Google Gemini, OpenAI, Groq) when configured
+ * 4. Transparent fallback to AgroNex Demo Expert Synthesizer with clear labeling
+ */
+export async function getAgriAiResponseAsync(
+  query: string,
+  history: ChatMessage[] = [],
+  options?: {
+    responseLanguage?: 'auto' | 'bn' | 'en';
+  }
+): Promise<AiResponseResult> {
+  const config = getAiConfig();
+  const pref = options?.responseLanguage || config.responseLanguage || 'auto';
+  const targetLang = resolveResponseLanguage(query, pref);
+  const langDetection = detectLanguage(query);
 
-  for (const topic of AGRI_KNOWLEDGE_BASE) {
-    let score = 0;
-    for (const kw of topic.keywords) {
-      if (normalized.includes(kw.toLowerCase())) {
-        score += kw.length >= 4 ? 3 : 2;
-      }
-    }
-    // Specific diseases and emergency keywords receive priority boost
-    if (topic.isEmergency && score > 0) {
-      score += 2;
-    }
-    if (score > maxScore) {
-      maxScore = score;
-      bestMatch = topic;
+  // If a genuine LLM provider with API key is configured
+  if (config.provider !== 'demo' && config.apiKey && config.apiKey.trim()) {
+    try {
+      const llmResult = await queryLlmApi(config, query, history, targetLang);
+      return {
+        reply: llmResult.reply,
+        isEmergency: llmResult.isEmergency,
+        actionCard: llmResult.actionCard,
+        isDemoMode: false,
+        providerUsed: llmResult.providerUsed,
+        modelUsed: llmResult.modelUsed,
+        detectedLanguage: langDetection.detected,
+        dominantLanguage: langDetection.dominant
+      };
+    } catch (err: any) {
+      console.warn('Configured LLM API call failed, falling back to AgroNex Expert Synthesis:', err);
+      // Graceful fallback with transparent disclosure
+      const fallback = synthesizeDemoResponse(query, targetLang, history);
+      const fallbackNote = targetLang === 'bn' 
+        ? `(⚠️ নোট: এআই এপিআই সংযোগে ত্রুটি হওয়ায় অফলাইন বিশেষজ্ঞ ইঞ্জিন থেকে উত্তর দেওয়া হয়েছে: ${err.message || 'নেটওয়ার্ক সমস্যা'})\n\n`
+        : `(⚠️ Note: AI API connection failed, answered via Offline Expert Engine: ${err.message || 'Network issue'})\n\n`;
+      return {
+        reply: fallbackNote + fallback.reply,
+        isEmergency: fallback.isEmergency,
+        actionCard: fallback.actionCard,
+        isDemoMode: true,
+        providerUsed: 'Offline Fallback',
+        modelUsed: 'offline-expert-engine',
+        detectedLanguage: langDetection.detected,
+        dominantLanguage: langDetection.dominant,
+        followUpQuestions: fallback.followUpQuestions,
+        sector: fallback.sector
+      };
     }
   }
 
-  // If a topic matched well
-  if (bestMatch && maxScore > 0) {
-    const reply = language === 'bn' ? bestMatch.answerBn : bestMatch.answerEn;
-    return {
-      reply,
-      isEmergency: !!bestMatch.isEmergency,
-      actionCard: bestMatch.actionCard
-    };
-  }
-
-  // Fallback intelligent agricultural assistant response
-  if (language === 'bn') {
-    return {
-      reply: `ধন্যবাদ আপনার প্রশ্নের জন্য। এগ্রোনেক্স ডিজিটাল এআই সহকারী কৃষি, গবাদিপশু, মৎস্য চাষ ও বাজারদরের প্রশ্নের উত্তর প্রদানে সার্বক্ষণিক প্রস্তুত। 
-আপনার প্রশ্নের বিষয় (যেমন: ধানের ব্লাস্ট রোগ, গাভীর দুধ বৃদ্ধি, পুকুরের অ্যামোনিয়া গ্যাস, আলুর সার মাত্রা বা আজকের বাজারদর) নির্দিষ্ট করে লিখলে সরাসরি নির্ভুল সমাধান দেওয়া যাবে।
-প্রয়োজনে আপনি মাঠপর্যায়ের বিসিএস কৃষিবিদ বা ভেটেরিনারি সার্জনের সাথে অডিও/ভিডিও পরামর্শও নিতে পারেন।`,
-      isEmergency: false,
-      actionCard: {
-        type: 'expert_booking',
-        labelBn: 'বিশেষজ্ঞের সাথে সরাসরি কথা বলুন',
-        labelEn: 'Consult an Expert',
-        tab: 'experts'
-      }
-    };
-  } else {
-    return {
-      reply: `Thank you for your question. AgroNex AI Assistant provides verified agricultural advice for crops, livestock, fisheries, and regional market trends. 
-Please specify your topic (e.g., Rice neck blast, potato late blight, dairy cattle ration, pond dissolved oxygen crisis, or fertilizer dosages) for an instant step-by-step recommendation.
-You can also connect directly with certified agronomists and veterinary doctors.`,
-      isEmergency: false,
-      actionCard: {
-        type: 'expert_booking',
-        labelBn: 'বিশেষজ্ঞের সাথে সরাসরি কথা বলুন',
-        labelEn: 'Consult an Expert',
-        tab: 'experts'
-      }
-    };
-  }
+  // Demo mode (Offline Expert Engine) - Clearly labeled
+  const synthesized = synthesizeDemoResponse(query, targetLang, history);
+  return {
+    reply: synthesized.reply,
+    isEmergency: synthesized.isEmergency,
+    actionCard: synthesized.actionCard,
+    isDemoMode: true,
+    providerUsed: 'Demo Mode (Offline Expert Engine)',
+    modelUsed: 'agronex-knowledge-v2',
+    detectedLanguage: langDetection.detected,
+    dominantLanguage: langDetection.dominant,
+    followUpQuestions: synthesized.followUpQuestions,
+    sector: synthesized.sector
+  };
 }
