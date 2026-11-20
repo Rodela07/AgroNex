@@ -113,16 +113,6 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMobileMenu, onSelectTab })
         {/* Right Actions */}
         <div className="flex items-center space-x-2 sm:space-x-3">
 
-          {/* Global Agri AI Assistant Shortcut */}
-          <button
-            onClick={() => onSelectTab && onSelectTab('ai')}
-            className="flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-forest-50 hover:bg-forest-100 text-forest-dark border border-forest/20 text-xs font-bold transition shadow-2xs cursor-pointer active:scale-95"
-            title={language === 'bn' ? 'কৃষি এআই সহকারী' : 'Agri AI Assistant'}
-          >
-            <Bot className="w-4 h-4 text-forest-leaf" />
-            <span className="hidden sm:inline">{language === 'bn' ? 'কৃষি এআই' : 'Agri AI'}</span>
-          </button>
-
           {/* Phase 2 Roadmap shortcut button */}
           <button
             onClick={() => setShowPhase2Modal(true)}
@@ -350,14 +340,6 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMobileMenu, onSelectTab })
                     >
                       <User className="w-4 h-4 text-forest" />
                       <span>{language === 'bn' ? 'প্রোফাইল সেটিংস' : 'Profile Settings'}</span>
-                    </button>
-
-                    <button
-                      onClick={() => onSelectTab && onSelectTab('login')}
-                      className="w-full flex items-center space-x-2 px-3 py-2 rounded-xl text-left hover:bg-forest-50 text-forest-dark font-medium transition cursor-pointer"
-                    >
-                      <LogIn className="w-4 h-4 text-forest" />
-                      <span>{language === 'bn' ? 'লগইন পোর্টাল / অ্যাকাউন্ট পরিবর্তন' : 'Login Portal / Switch'}</span>
                     </button>
 
                     <div className="pt-1 border-t border-softBorder">

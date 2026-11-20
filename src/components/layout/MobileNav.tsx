@@ -193,19 +193,6 @@ export const MobileNav: React.FC<MobileNavProps> = ({
                   </button>
 
                   <button
-                    onClick={() => handleNav('ai')}
-                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold text-left transition min-h-[44px] bg-forest-50/80 hover:bg-forest-100 text-forest-dark border border-forest/20 active:bg-forest/20 cursor-pointer"
-                  >
-                    <span className="flex items-center space-x-3">
-                      <Bot className="w-4 h-4 text-forest-leaf shrink-0" />
-                      <span>{language === 'bn' ? 'এআই কৃষি সহকারী (Ask AI)' : 'Agri AI Assistant'}</span>
-                    </span>
-                    <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-forest text-white font-bold">
-                      ২৪/৭
-                    </span>
-                  </button>
-
-                  <button
                     onClick={() => handleNav('prices')}
                     className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-bold text-left transition min-h-[44px] ${
                       currentTab === 'prices' ? 'bg-forest text-white' : 'text-primaryText hover:bg-rice active:bg-rice'
@@ -255,16 +242,6 @@ export const MobileNav: React.FC<MobileNavProps> = ({
                   >
                     <User className="w-4 h-4 text-secondaryText shrink-0" />
                     <span>{language === 'bn' ? 'প্রোফাইল ও বহুবিধ রোল সেটিংস' : 'Profile & Settings'}</span>
-                  </button>
-
-                  <button
-                    onClick={() => handleNav('login')}
-                    className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-bold text-left transition min-h-[44px] ${
-                      currentTab === 'login' ? 'bg-forest text-white' : 'text-primaryText hover:bg-rice active:bg-rice'
-                    }`}
-                  >
-                    <LogIn className="w-4 h-4 text-forest shrink-0" />
-                    <span>{language === 'bn' ? 'লগইন ও রোল পোর্টাল' : 'Login Portal'}</span>
                   </button>
                 </div>
 

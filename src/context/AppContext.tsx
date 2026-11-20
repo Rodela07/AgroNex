@@ -42,7 +42,23 @@ import {
   INITIAL_NOTIFICATIONS, 
   INITIAL_REMINDERS 
 } from '../data/mockData';
-import { DEMO_PERSONAS } from '../data/demoPersonas';
+
+export const DEFAULT_USER: UserProfile = {
+  id: 'usr_guest',
+  name: 'সম্মানিত কৃষক সদস্য (Member)',
+  phone: '01700000000',
+  email: '',
+  roles: ['agri_farmer'],
+  sectors: ['agriculture'],
+  division: 'Rajshahi',
+  district: 'Bogura',
+  upazila: 'Bogura Sadar',
+  village: '',
+  avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
+  isVerified: true,
+  businessName: '',
+  joinedDate: 'আজ (Today)'
+};
 
 export interface ToastMessage {
   id: string;
@@ -64,10 +80,10 @@ interface AppContextType {
 
   // Auth & Session
   isAuthenticated: boolean;
-  login: (userProfile: UserProfile) => void;
-  loginWithPhoneOtp: (phone: string, otp: string) => Promise<boolean>;
-  loginWithPassword: (identifier: string, password: string) => Promise<boolean>;
-  loginAsPersona: (personaId: string) => void;
+  login: (userProfile: UserProfile, remember?: boolean) => void;
+  loginWithPhoneOtp: (phone: string, otp: string, remember?: boolean) => Promise<boolean>;
+  loginWithPassword: (identifier: string, password: string, remember?: boolean) => Promise<boolean>;
+  loginAsPersona?: (personaId: string) => void;
   logout: () => void;
 
   // Toast System
@@ -184,39 +200,39 @@ function saveStoredItem<T>(key: string, value: T): void {
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Global states
   const [language, setLanguageState] = useState<Language>(() => getStoredItem('lang', 'bn'));
-  const [user, setUserState] = useState<UserProfile>(() => getStoredItem('user', INITIAL_USER));
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => getStoredItem('is_auth', false));
+  const [user, setUserState] = useState<UserProfile>(() => getStoredItem('user', DEFAULT_USER));
   const [activeRole, setActiveRoleState] = useState<UserRole>(() => getStoredItem('role', 'agri_farmer'));
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => getStoredItem('is_auth', true));
   const [isOffline, setIsOffline] = useState<boolean>(false);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [showPhase2Modal, setShowPhase2Modal] = useState<boolean>(false);
 
-  // Entities state
-  const [lands, setLands] = useState<LandProfile[]>(() => getStoredItem('lands', INITIAL_LANDS));
+  // Entities state - Start empty for user data (No fake mock user data)
+  const [lands, setLands] = useState<LandProfile[]>(() => getStoredItem('lands', []));
   const [fertilizerPlans, setFertilizerPlans] = useState<FertilizerPlan[]>(() => getStoredItem('fertilizers', []));
-  const [livestockFarms, setLivestockFarms] = useState<LivestockFarm[]>(() => getStoredItem('livestock', INITIAL_LIVESTOCK_FARMS));
-  const [animals, setAnimals] = useState<AnimalRecord[]>(() => getStoredItem('animals', INITIAL_ANIMALS));
-  const [vaccinations, setVaccinations] = useState<VaccinationRecord[]>(() => getStoredItem('vaccinations', INITIAL_VACCINATIONS));
-  const [feedingLogs, setFeedingLogs] = useState<FeedingLog[]>(() => getStoredItem('feeding', INITIAL_FEEDING_LOGS));
-  const [ponds, setPonds] = useState<PondProfile[]>(() => getStoredItem('ponds', INITIAL_PONONS_FALLBACK()));
-  const [waterQualityRecords, setWaterQualityRecords] = useState<WaterQualityRecord[]>(() => getStoredItem('water_quality', INITIAL_WATER_QUALITY));
+  const [livestockFarms, setLivestockFarms] = useState<LivestockFarm[]>(() => getStoredItem('livestock', []));
+  const [animals, setAnimals] = useState<AnimalRecord[]>(() => getStoredItem('animals', []));
+  const [vaccinations, setVaccinations] = useState<VaccinationRecord[]>(() => getStoredItem('vaccinations', []));
+  const [feedingLogs, setFeedingLogs] = useState<FeedingLog[]>(() => getStoredItem('feeding', []));
+  const [ponds, setPonds] = useState<PondProfile[]>(() => getStoredItem('ponds', []));
+  const [waterQualityRecords, setWaterQualityRecords] = useState<WaterQualityRecord[]>(() => getStoredItem('water_quality', []));
   const [listings, setListings] = useState<MarketplaceListing[]>(() => getStoredItem('listings', INITIAL_LISTINGS));
-  const [inquiries, setInquiries] = useState<NegotiationInquiry[]>(() => getStoredItem('inquiries', INITIAL_INQUIRIES));
-  const [orders, setOrders] = useState<OrderRecord[]>(() => getStoredItem('orders', INITIAL_ORDERS));
-  const [priceAlerts, setPriceAlerts] = useState<PriceAlert[]>(() => getStoredItem('alerts', INITIAL_PRICE_ALERTS));
+  const [inquiries, setInquiries] = useState<NegotiationInquiry[]>(() => getStoredItem('inquiries', []));
+  const [orders, setOrders] = useState<OrderRecord[]>(() => getStoredItem('orders', []));
+  const [priceAlerts, setPriceAlerts] = useState<PriceAlert[]>(() => getStoredItem('alerts', []));
   const [marketPrices, setMarketPrices] = useState<MarketPriceItem[]>(() => getStoredItem('market_prices', INITIAL_MARKET_PRICES));
   const [experts] = useState<ExpertProfile[]>(INITIAL_EXPERTS);
-  const [consultations, setConsultations] = useState<ConsultationBooking[]>(() => getStoredItem('consultations', INITIAL_CONSULTATIONS));
-  const [notifications, setNotifications] = useState<NotificationItem[]>(() => getStoredItem('notifications', INITIAL_NOTIFICATIONS));
-  const [reminders, setReminders] = useState<CalendarReminder[]>(() => getStoredItem('reminders', INITIAL_REMINDERS));
-
-  function INITIAL_PONONS_FALLBACK() {
-    return INITIAL_PONDS;
-  }
+  const [consultations, setConsultations] = useState<ConsultationBooking[]>(() => getStoredItem('consultations', []));
+  const [notifications, setNotifications] = useState<NotificationItem[]>(() => getStoredItem('notifications', []));
+  const [reminders, setReminders] = useState<CalendarReminder[]>(() => getStoredItem('reminders', []));
 
   // Persistence helpers
   useEffect(() => { saveStoredItem('lang', language); }, [language]);
-  useEffect(() => { saveStoredItem('user', user); }, [user]);
+  useEffect(() => { 
+    if (isAuthenticated) {
+      saveStoredItem('user', user); 
+    }
+  }, [user, isAuthenticated]);
   useEffect(() => { saveStoredItem('role', activeRole); }, [activeRole]);
   useEffect(() => { saveStoredItem('is_auth', isAuthenticated); }, [isAuthenticated]);
   useEffect(() => { saveStoredItem('lands', lands); }, [lands]);
@@ -266,12 +282,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   // Auth & Session methods
-  const login = (userProfile: UserProfile) => {
+  const login = (userProfile: UserProfile, remember: boolean = true) => {
     setUserState(userProfile);
     if (userProfile.roles.length > 0) {
       setActiveRoleState(userProfile.roles[0]);
     }
     setIsAuthenticated(true);
+    if (remember) {
+      saveStoredItem('is_auth', true);
+      saveStoredItem('user', userProfile);
+    }
     showToast(
       language === 'bn' ? `স্বাগতম, ${userProfile.name}!` : `Welcome, ${userProfile.name}!`,
       'success',
@@ -279,65 +299,107 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     );
   };
 
-  const loginWithPhoneOtp = async (phone: string, otp: string): Promise<boolean> => {
-    if (otp === '123456' || otp.length === 6) {
-      const matched = DEMO_PERSONAS.find(p => p.phone === phone);
-      if (matched) {
-        login(matched.profile);
-      } else {
-        const customUser: UserProfile = {
-          ...INITIAL_USER,
-          phone,
-          name: `কৃষক সদস্য (${phone.slice(-4)})`,
-          id: `usr_${Date.now()}`
-        };
-        login(customUser);
-      }
-      return true;
+  const loginWithPhoneOtp = async (phone: string, otp: string, remember: boolean = true): Promise<boolean> => {
+    const cleanPhone = phone.trim().replace(/[^\d+]/g, '');
+    const cleanOtp = otp.trim();
+
+    if (cleanPhone.length < 11) {
+      showToast(
+        language === 'bn' ? 'সঠিক মোবাইল নম্বর দিন' : 'Enter valid phone number',
+        'error',
+        language === 'bn' ? '১১-সংখ্যার বাংলাদেশী মোবাইল নম্বর আবশ্যক (যেমন: 017xxxxxxxx)' : '11-digit mobile number required'
+      );
+      return false;
     }
-    showToast(
-      language === 'bn' ? 'ভুল ওটিপি কোড' : 'Invalid OTP code',
-      'error',
-      language === 'bn' ? 'সঠিক ৬-সংখ্যার ওটিপি কোড লিখুন (ডেমো কোড: 123456)' : 'Enter valid 6-digit code (Demo code: 123456)'
-    );
-    return false;
+
+    if (cleanOtp.length !== 6) {
+      showToast(
+        language === 'bn' ? '৬-সংখ্যার কোড দিন' : 'Enter 6-digit code',
+        'error',
+        language === 'bn' ? 'যাচাইকরণ ওটিপি কোড ৬ সংখ্যার হতে হবে।' : 'Verification code must be 6 digits.'
+      );
+      return false;
+    }
+
+    // Check if user exists in saved user registry
+    const registeredUsers = getStoredItem<UserProfile[]>('registered_users', []);
+    let profile = registeredUsers.find(u => u.phone === cleanPhone);
+
+    if (!profile) {
+      // Create new profile for this authenticated phone
+      profile = {
+        ...DEFAULT_USER,
+        id: `usr_${Date.now()}`,
+        phone: cleanPhone,
+        name: `সদস্য কৃষক (${cleanPhone.slice(-4)})`,
+        joinedDate: new Date().toLocaleDateString(language === 'bn' ? 'bn-BD' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' })
+      };
+      saveStoredItem('registered_users', [...registeredUsers, profile]);
+    }
+
+    login(profile, remember);
+    return true;
   };
 
-  const loginWithPassword = async (identifier: string, password: string): Promise<boolean> => {
-    if (password.length >= 4) {
-      const matched = DEMO_PERSONAS.find(p => p.phone === identifier || p.profile.email === identifier);
-      if (matched) {
-        login(matched.profile);
-      } else {
-        login({
-          ...INITIAL_USER,
-          phone: identifier.includes('@') ? INITIAL_USER.phone : identifier,
-          email: identifier.includes('@') ? identifier : INITIAL_USER.email
-        });
-      }
-      return true;
+  const loginWithPassword = async (identifier: string, password: string, remember: boolean = true): Promise<boolean> => {
+    const cleanId = identifier.trim();
+    if (!cleanId) {
+      showToast(language === 'bn' ? 'মোবাইল বা ইমেইল লিখুন' : 'Enter mobile or email', 'error');
+      return false;
     }
-    showToast(
-      language === 'bn' ? 'লগইন ব্যর্থ' : 'Login failed',
-      'error',
-      language === 'bn' ? 'পাসওয়ার্ড ন্যূনতম ৪ অক্ষরের হতে হবে।' : 'Password must be at least 4 characters.'
-    );
-    return false;
+
+    if (password.length < 6) {
+      showToast(
+        language === 'bn' ? 'পাসওয়ার্ড অত্যন্ত ছোট' : 'Password too short',
+        'error',
+        language === 'bn' ? 'পাসওয়ার্ড ন্যূনতম ৬ অক্ষরের হতে হবে।' : 'Password must be at least 6 characters.'
+      );
+      return false;
+    }
+
+    // Check saved user registry
+    const registeredUsers = getStoredItem<UserProfile[]>('registered_users', []);
+    let profile = registeredUsers.find(u => u.phone === cleanId || u.email === cleanId);
+
+    if (!profile) {
+      profile = {
+        ...DEFAULT_USER,
+        id: `usr_${Date.now()}`,
+        phone: cleanId.includes('@') ? '01700000000' : cleanId,
+        email: cleanId.includes('@') ? cleanId : undefined,
+        name: cleanId.includes('@') ? cleanId.split('@')[0] : `সদস্য (${cleanId.slice(-4)})`,
+        joinedDate: new Date().toLocaleDateString(language === 'bn' ? 'bn-BD' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' })
+      };
+      saveStoredItem('registered_users', [...registeredUsers, profile]);
+    }
+
+    login(profile, remember);
+    return true;
   };
 
   const loginAsPersona = (personaId: string) => {
-    const found = DEMO_PERSONAS.find(p => p.id === personaId);
-    if (found) {
-      login(found.profile);
-    }
+    const customUser: UserProfile = {
+      ...DEFAULT_USER,
+      id: `usr_${personaId}`,
+      name: `কৃষক সদস্য`,
+      joinedDate: 'আজ'
+    };
+    login(customUser, false);
   };
 
   const logout = () => {
     setIsAuthenticated(false);
+    setUserState(DEFAULT_USER);
+    try {
+      localStorage.removeItem(STORAGE_PREFIX + 'is_auth');
+      localStorage.removeItem(STORAGE_PREFIX + 'user');
+    } catch {
+      // Ignore
+    }
     showToast(
-      language === 'bn' ? 'লগ আউট সম্পন্ন' : 'Logged out',
+      language === 'bn' ? 'লগ আউট সম্পন্ন হয়েছে' : 'Logged out successfully',
       'info',
-      language === 'bn' ? 'আপনার সেশন সমাপ্ত হয়েছে। পুনরায় প্রবেশ করতে লগইন করুন।' : 'Your session has ended.'
+      language === 'bn' ? 'আপনার সেশন সমাপ্ত হয়েছে। ড্যাশবোর্ডে প্রবেশ করতে লগইন করুন।' : 'Your session has ended.'
     );
   };
 
@@ -785,23 +847,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const resetAllData = () => {
     localStorage.clear();
-    setLands(INITIAL_LANDS);
-    setLivestockFarms(INITIAL_LIVESTOCK_FARMS);
-    setAnimals(INITIAL_ANIMALS);
-    setVaccinations(INITIAL_VACCINATIONS);
-    setFeedingLogs(INITIAL_FEEDING_LOGS);
-    setPonds(INITIAL_PONDS);
-    setWaterQualityRecords(INITIAL_WATER_QUALITY);
+    setLands([]);
+    setLivestockFarms([]);
+    setAnimals([]);
+    setVaccinations([]);
+    setFeedingLogs([]);
+    setPonds([]);
+    setWaterQualityRecords([]);
     setListings(INITIAL_LISTINGS);
-    setInquiries(INITIAL_INQUIRIES);
-    setOrders(INITIAL_ORDERS);
-    setPriceAlerts(INITIAL_PRICE_ALERTS);
+    setInquiries([]);
+    setOrders([]);
+    setPriceAlerts([]);
     setMarketPrices(INITIAL_MARKET_PRICES);
-    setConsultations(INITIAL_CONSULTATIONS);
-    setNotifications(INITIAL_NOTIFICATIONS);
-    setReminders(INITIAL_REMINDERS);
-    setUserState(INITIAL_USER);
-    showToast(language === 'bn' ? 'ডেমো ডেটা রিসেট সম্পন্ন হয়েছে' : 'Demo data reset to defaults', 'info');
+    setConsultations([]);
+    setNotifications([]);
+    setReminders([]);
+    setUserState(DEFAULT_USER);
+    setIsAuthenticated(false);
+    showToast(language === 'bn' ? 'সিস্টেম ডেটা সফলভাবে পরিষ্কার করা হয়েছে' : 'System data cleared', 'info');
   };
 
   return (

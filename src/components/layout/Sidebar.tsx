@@ -46,14 +46,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
       badge: null
     },
     {
-      id: 'ai',
-      labelBn: 'এআই কৃষি সহকারী',
-      labelEn: 'Agri AI Assistant',
-      icon: Bot,
-      color: 'text-forest-leaf',
-      badge: 'AI 24/7'
-    },
-    {
       id: 'agriculture',
       labelBn: 'কৃষি ব্যবস্থাপনা',
       labelEn: 'Agriculture',
@@ -131,15 +123,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
     labelEn: 'Profile & Settings',
     icon: User,
     color: 'text-secondaryText',
-    badge: null
-  });
-
-  navItems.push({
-    id: 'login',
-    labelBn: 'লগইন ও রোল পোর্টাল',
-    labelEn: 'Login Portal',
-    icon: LogIn,
-    color: 'text-forest',
     badge: null
   });
 

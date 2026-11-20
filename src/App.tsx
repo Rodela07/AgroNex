@@ -7,6 +7,7 @@ import { ToastContainer } from './components/common/ToastContainer';
 import { Phase2Modal } from './components/roadmap/Phase2Modal';
 import { OnboardingModal } from './pages/auth/OnboardingModal';
 import { LoginPage } from './pages/auth/LoginPage';
+import { PublicLandingDashboard } from './pages/dashboard/PublicLandingDashboard';
 import { AgriChatbotModal } from './components/ai/AgriChatbotModal';
 import { FloatingAiLauncher } from './components/ai/FloatingAiLauncher';
 
@@ -28,6 +29,7 @@ export const App: React.FC = () => {
   const [currentTab, setCurrentTab] = useState<string>('dashboard');
   const [currentSubTab, setCurrentSubTab] = useState<string>('overview');
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
+  const [showLoginModal, setShowLoginModal] = useState<boolean>(false);
   const [showOnboarding, setShowOnboarding] = useState<boolean>(false);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState<boolean>(false);
   const [showChatbot, setShowChatbot] = useState<boolean>(false);
@@ -36,6 +38,10 @@ export const App: React.FC = () => {
   const handleNavigate = (tab: string, subtab?: string) => {
     if (tab === 'chatbot' || tab === 'ai') {
       setShowChatbot(true);
+      return;
+    }
+    if (tab === 'login') {
+      setShowLoginModal(true);
       return;
     }
     setCurrentTab(tab);
@@ -48,14 +54,29 @@ export const App: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // If unauthenticated or user navigated to login portal
-  if (!isAuthenticated || currentTab === 'login') {
+  // If unauthenticated: visitor sees clean, minimal public landing dashboard with Login as primary gateway
+  if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-rice flex flex-col font-sans selection:bg-forest/20 selection:text-forest-dark antialiased">
-        <LoginPage
-          onSuccess={() => handleNavigate('dashboard')}
+        <PublicLandingDashboard
+          onOpenLogin={() => setShowLoginModal(true)}
           onOpenRegister={() => setShowOnboarding(true)}
-          onExploreAsGuest={() => handleNavigate('dashboard')}
+        />
+        <LoginPage
+          isOpen={showLoginModal}
+          onClose={() => setShowLoginModal(false)}
+          onSuccess={() => {
+            setShowLoginModal(false);
+            setCurrentTab('dashboard');
+          }}
+          onOpenRegister={() => {
+            setShowLoginModal(false);
+            setShowOnboarding(true);
+          }}
+          onExploreAsGuest={() => {
+            setShowLoginModal(false);
+            setCurrentTab('dashboard');
+          }}
         />
         <OnboardingModal isOpen={showOnboarding} onClose={() => setShowOnboarding(false)} />
         <ToastContainer />

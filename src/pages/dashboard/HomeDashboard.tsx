@@ -292,43 +292,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({ onNavigate, onOpen
         </div>
       </div>
 
-      {/* 4. SIMPLE AI ASSISTANT ENTRY POINT */}
-      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-softBorder shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-start sm:items-center space-x-3.5">
-          <div className="relative">
-            <div className="w-11 h-11 rounded-2xl bg-forest-light flex items-center justify-center text-forest shrink-0">
-              <Bot className="w-6 h-6 text-forest" />
-            </div>
-            <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full" />
-          </div>
-          <div>
-            <div className="flex items-center space-x-2">
-              <h3 className="font-bold text-sm sm:text-base text-forest-dark">
-                {language === 'bn' ? 'কৃষি এআই সহকারী (Agri AI)' : 'Agri AI Assistant'}
-              </h3>
-              <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-forest-light text-forest border border-forest/20">
-                ২৪/৭
-              </span>
-            </div>
-            <p className="text-xs text-secondaryText mt-0.5">
-              {language === 'bn' 
-                ? 'ফসল, সার, পশু বা মাছের রোগবালাই নিয়ে যেকোনো প্রশ্ন লিখুন বা বলুন' 
-                : 'Ask any question about crops, fertilizers, livestock diseases or fish care'}
-            </p>
-          </div>
-        </div>
-
-        <button
-          onClick={() => onOpenChatbot ? onOpenChatbot() : onNavigate('agriculture', 'troubleshoot')}
-          className="btn-primary text-xs sm:text-sm py-2.5 px-5 flex items-center justify-center space-x-2 cursor-pointer shrink-0 active:scale-95 shadow-xs"
-        >
-          <Sparkles className="w-4 h-4 text-forest-leaf" />
-          <span>{language === 'bn' ? 'প্রশ্ন করুন' : 'Ask a Question'}</span>
-          <ArrowRight className="w-4 h-4 ml-1" />
-        </button>
-      </div>
-
-      {/* 5. TODAY'S TASKS & REMINDERS */}
+      {/* 4. TODAY'S TASKS & REMINDERS */}
       <div className="bg-white p-4 sm:p-5 rounded-2xl border border-softBorder shadow-2xs">
         <div className="flex items-center justify-between mb-3.5">
           <div className="flex items-center space-x-2">
@@ -402,7 +366,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({ onNavigate, onOpen
         )}
       </div>
 
-      {/* 6. SMALL MARKETPLACE PRODUCT PREVIEW */}
+      {/* 5. SMALL MARKETPLACE PRODUCT PREVIEW */}
       <div className="bg-white p-4 sm:p-5 rounded-2xl border border-softBorder shadow-2xs">
         <div className="flex items-center justify-between mb-3.5">
           <div>
