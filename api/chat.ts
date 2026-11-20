@@ -66,8 +66,8 @@ export default async function handler(req: any, res: any) {
       service: 'AgroNex Serverless AI Backend',
       sdk: '@google/genai',
       geminiConfigured: isConfigured,
-      model: process.env.GEMINI_MODEL || 'gemini-3.5-flash',
-      version: '3.0.0'
+      model: process.env.GEMINI_MODEL || 'gemini-3.8-flash',
+      version: '3.8.0'
     });
   }
 
@@ -133,9 +133,11 @@ export default async function handler(req: any, res: any) {
     targetLang = hasBengaliScript || banglishMarkers ? 'bn' : 'en';
   }
 
-  // Model prioritization: gemini-3.5-flash is current production default
-  const requestedModel = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
-  const candidateModels = [requestedModel, 'gemini-3.8-flash', 'gemini-2.5-flash'];
+  // Model prioritization: gemini-3.8-flash is current production default
+  const requestedModel = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
+  const candidateModels = [requestedModel, 'gemini-3.8-flash', 'gemini-3.5-flash'].filter(
+    (v, i, a) => a.indexOf(v) === i
+  );
 
   const AGRONEX_SYSTEM_PROMPT = `You are AgroNex AI (এগ্রোনেক্স এআই কৃষি সহকারী), a dedicated multilingual agricultural assistant designed to help ordinary farmers and agricultural communities in Bangladesh.
 
@@ -215,11 +217,11 @@ If relevant to the question, include exactly one action tag:
   let successfulResponse: any = null;
   let activeModelUsed = requestedModel;
 
-  // Try candidate models in order of priority with a 15-second timeout
+  // Try candidate models in order of priority with a 25-second timeout
   for (const modelToTry of candidateModels) {
     try {
       activeModelUsed = modelToTry;
-      const timeoutMs = 15000;
+      const timeoutMs = 25000;
       const timeoutPromise = new Promise((_, reject) => {
         setTimeout(() => reject(new Error('REQUEST_TIMEOUT')), timeoutMs);
       });
@@ -251,7 +253,7 @@ If relevant to the question, include exactly one action tag:
       return res.status(504).json({
         success: false,
         code: 'TIMEOUT',
-        error: 'Gemini AI request timed out after 15 seconds. Please try again.',
+        error: 'Gemini AI request timed out. Please try again.',
         isDemoMode: false
       });
     }

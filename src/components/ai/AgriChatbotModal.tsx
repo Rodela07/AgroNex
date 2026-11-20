@@ -68,7 +68,7 @@ export const AgriChatbotModal: React.FC<AgriChatbotModalProps> = ({
   const [serverStatus, setServerStatus] = useState<{ checked: boolean; configured: boolean; model: string }>({
     checked: false,
     configured: true,
-    model: 'gemini-3.5-flash'
+    model: 'gemini-3.8-flash'
   });
 
   useEffect(() => {
@@ -78,7 +78,7 @@ export const AgriChatbotModal: React.FC<AgriChatbotModalProps> = ({
           setServerStatus({ checked: true, configured: st.geminiConfigured, model: st.model });
         })
         .catch(() => {
-          setServerStatus({ checked: true, configured: false, model: 'gemini-3.5-flash' });
+          setServerStatus({ checked: true, configured: false, model: 'gemini-3.8-flash' });
         });
     }
   }, [isOpen, aiConfig.provider]);
@@ -350,7 +350,7 @@ I understand Bengali script, Romanized Banglish (e.g. "Goru khabar khacche na ki
                     {aiConfig.provider === 'server-gemini' 
                       ? (serverStatus.checked && !serverStatus.configured 
                           ? 'Demo/FAQ Mode (Key Unset)' 
-                          : `Gemini AI Connected (${serverStatus.model || 'gemini-3.5-flash'})`)
+                          : `Gemini AI Connected (${serverStatus.model || 'gemini-3.8-flash'})`)
                       : (aiConfig.provider === 'demo' ? 'Demo/FAQ Mode' : `${aiConfig.provider.toUpperCase()} AI Connected`)}
                   </span>
                 </button>
@@ -796,7 +796,7 @@ I understand Bengali script, Romanized Banglish (e.g. "Goru khabar khacche na ki
                 </p>
                 <div className="bg-white/90 p-2.5 rounded-xl text-[11px] font-mono border border-forest/15 space-y-1">
                   <div><span className="font-bold text-forest">Vercel Env:</span> GEMINI_API_KEY</div>
-                  <div><span className="font-bold text-forest">Active Model:</span> gemini-1.5-flash</div>
+                  <div><span className="font-bold text-forest">Active Model:</span> gemini-3.8-flash</div>
                   <div><span className="font-bold text-forest">Endpoint:</span> /api/chat</div>
                 </div>
               </div>

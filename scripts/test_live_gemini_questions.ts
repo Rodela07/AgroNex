@@ -77,41 +77,52 @@ async function main() {
   console.log('=============================================================\n');
 
   const ai = new GoogleGenAI({ apiKey });
-  const model = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
+  const model = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
   console.log(`Target Model: ${model}\n`);
 
   let successCount = 0;
 
+  const candidateModels = [model, 'gemini-3.8-flash', 'gemini-3.5-flash'].filter((v, i, a) => a.indexOf(v) === i);
+
   for (const t of TEST_QUESTIONS) {
     console.log(`-------------------------------------------------------------`);
     console.log(`TEST #${t.id}: "${t.question}" [${t.lang}]`);
-    console.log(`Calling Gemini (${model})...`);
 
-    const startTime = Date.now();
-    try {
-      const response = await ai.models.generateContent({
-        model,
-        contents: t.question,
-        config: {
-          systemInstruction: AGRONEX_SYSTEM_INSTRUCTION,
-          temperature: 0.6
+    let success = false;
+    for (const m of candidateModels) {
+      const startTime = Date.now();
+      try {
+        console.log(`Calling Gemini (${m})...`);
+        const response = await ai.models.generateContent({
+          model: m,
+          contents: t.question,
+          config: {
+            systemInstruction: AGRONEX_SYSTEM_INSTRUCTION,
+            temperature: 0.6
+          }
+        });
+
+        const elapsed = Date.now() - startTime;
+        const text = response.text || '';
+
+        if (!text || text.trim().length === 0) {
+          throw new Error('Empty response from model');
         }
-      });
 
-      const elapsed = Date.now() - startTime;
-      const text = response.text || '';
-
-      if (!text || text.trim().length === 0) {
-        throw new Error('Empty response from model');
+        console.log(`  ⏱️ Model: ${m} | Response time: ${elapsed}ms | Length: ${text.length} chars`);
+        console.log(`  📝 Output Preview (first 250 chars):`);
+        console.log(`     ${text.slice(0, 250).replace(/\n/g, ' ')}...`);
+        console.log(`  ✅ Verified: Real Gemini-generated dynamic response.`);
+        success = true;
+        successCount++;
+        break;
+      } catch (err: any) {
+        console.warn(`  ⚠️ Model ${m} attempt failed: ${err?.message?.slice(0, 120)}`);
       }
+    }
 
-      console.log(`  ⏱️ Response time: ${elapsed}ms | Length: ${text.length} chars`);
-      console.log(`  📝 Output Preview (first 250 chars):`);
-      console.log(`     ${text.slice(0, 250).replace(/\n/g, ' ')}...`);
-      console.log(`  ✅ Verified: Real Gemini-generated dynamic response.`);
-      successCount++;
-    } catch (err: any) {
-      console.error(`  ❌ Error querying Gemini:`, err?.message || err);
+    if (!success) {
+      console.error(`  ❌ All model attempts failed for Test #${t.id}`);
     }
   }
 

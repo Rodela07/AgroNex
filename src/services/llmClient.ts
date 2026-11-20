@@ -135,7 +135,7 @@ async function callGeminiApi(
   history: ChatMessage[],
   targetLang: 'bn' | 'en'
 ): Promise<LlmCallResult> {
-  const model = config.model || 'gemini-1.5-flash';
+  const model = config.model || 'gemini-3.8-flash';
   const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${config.apiKey}`;
 
   const contents: any[] = [];
@@ -305,7 +305,7 @@ export async function queryServerAiApi(
     isEmergency: !!json.isEmergency,
     actionCard: json.actionCard,
     providerUsed: json.provider || 'Google Gemini (Server-Secured)',
-    modelUsed: json.model || 'gemini-3.5-flash'
+    modelUsed: json.model || 'gemini-3.8-flash'
   };
 }
 
@@ -319,15 +319,15 @@ export async function checkServerAiStatus(): Promise<{
 }> {
   try {
     const res = await fetch('/api/chat', { method: 'GET' });
-    if (!res.ok) return { online: false, geminiConfigured: false, model: 'gemini-3.5-flash' };
+    if (!res.ok) return { online: false, geminiConfigured: false, model: 'gemini-3.8-flash' };
     const json = await res.json();
     return {
       online: json.status === 'online',
       geminiConfigured: !!json.geminiConfigured,
-      model: json.model || 'gemini-3.5-flash'
+      model: json.model || 'gemini-3.8-flash'
     };
   } catch {
-    return { online: false, geminiConfigured: false, model: 'gemini-3.5-flash' };
+    return { online: false, geminiConfigured: false, model: 'gemini-3.8-flash' };
   }
 }
 

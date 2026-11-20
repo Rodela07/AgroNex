@@ -381,7 +381,7 @@ export async function getAgriAiResponseAsync(
         actionCard: llmResult.actionCard,
         isDemoMode: false,
         providerUsed: llmResult.providerUsed || 'Google Gemini AI',
-        modelUsed: llmResult.modelUsed || 'gemini-3.5-flash',
+        modelUsed: llmResult.modelUsed || 'gemini-3.8-flash',
         detectedLanguage: langDetection.detected,
         dominantLanguage: langDetection.dominant
       };

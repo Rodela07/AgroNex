@@ -17,23 +17,22 @@ const STORAGE_KEY_CONFIG = 'agronex_ai_config';
 export const DEFAULT_AI_CONFIG: AiConfig = {
   provider: 'server-gemini',
   apiKey: '',
-  model: 'gemini-3.5-flash',
+  model: 'gemini-3.8-flash',
   responseLanguage: 'auto',
   temperature: 0.6
 };
 
 export const PROVIDER_MODELS: Record<AiProviderType, { id: string; name: string }[]> = {
   'server-gemini': [
-    { id: 'gemini-3.5-flash', name: 'Google Gemini 3.5 Flash (সার্ভার সিকিউরড Vercel API)' },
-    { id: 'gemini-3.8-flash', name: 'Google Gemini 3.8 Flash' }
+    { id: 'gemini-3.8-flash', name: 'Google Gemini 3.8 Flash (সার্ভার সিকিউরড Vercel API)' },
+    { id: 'gemini-3.5-flash', name: 'Google Gemini 3.5 Flash' }
   ],
   demo: [
     { id: 'offline-expert-engine', name: 'AgroNex Offline Expert Engine (ডেমো)' }
   ],
   gemini: [
-    { id: 'gemini-3.5-flash', name: 'Gemini 3.5 Flash (সরাসরি ক্লায়েন্ট এপিআই)' },
-    { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash' },
-    { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash' }
+    { id: 'gemini-3.8-flash', name: 'Gemini 3.8 Flash (সরাসরি ক্লায়েন্ট এপিআই)' },
+    { id: 'gemini-3.5-flash', name: 'Gemini 3.5 Flash' }
   ],
   openai: [
     { id: 'gpt-4o-mini', name: 'GPT-4o Mini (দ্রুত ও সাশ্রয়ী)' },
