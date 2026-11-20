@@ -14,6 +14,8 @@ export interface ChatMessage {
   timestamp: string;
   isEmergency?: boolean;
   isDemoMode?: boolean;
+  isError?: boolean;
+  failedQuery?: string;
   providerUsed?: string;
   followUpQuestions?: string[];
   actionCard?: {

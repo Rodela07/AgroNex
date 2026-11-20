@@ -36,7 +36,7 @@ import {
   AiProviderType, 
   AiResponseLanguagePref 
 } from '../../services/aiConfigService.ts';
-import { testAiConnection } from '../../services/llmClient.ts';
+import { testAiConnection, checkServerAiStatus } from '../../services/llmClient.ts';
 
 interface AgriChatbotModalProps {
   isOpen: boolean;
@@ -63,6 +63,25 @@ export const AgriChatbotModal: React.FC<AgriChatbotModalProps> = ({
   const [showApiKey, setShowApiKey] = useState(false);
   const [isTestingApi, setIsTestingApi] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
+
+  // Server Gemini configuration status
+  const [serverStatus, setServerStatus] = useState<{ checked: boolean; configured: boolean; model: string }>({
+    checked: false,
+    configured: true,
+    model: 'gemini-1.5-flash'
+  });
+
+  useEffect(() => {
+    if (isOpen && aiConfig.provider === 'server-gemini') {
+      checkServerAiStatus()
+        .then(st => {
+          setServerStatus({ checked: true, configured: st.geminiConfigured, model: st.model });
+        })
+        .catch(() => {
+          setServerStatus({ checked: true, configured: false, model: 'gemini-1.5-flash' });
+        });
+    }
+  }, [isOpen, aiConfig.provider]);
 
   // Chat conversation state
   const [messages, setMessages] = useState<ChatMessage[]>(() => [
@@ -177,8 +196,12 @@ I understand Bengali script, Romanized Banglish (e.g. "Goru khabar khacche na ki
       const errMsg: ChatMessage = {
         id: `ai_err_${Date.now()}`,
         sender: 'ai',
-        text: `দুঃখিত, এআই প্রসেসিংয়ে একটি সমস্যা হয়েছে: ${err.message || 'অজানা ত্রুটি'}। পুনরায় চেষ্টা করুন।`,
+        text: language === 'bn'
+          ? `দুঃখিত, এআই সার্ভার সংযোগে ত্রুটি দেখা দিয়েছে: ${err.message || 'অজানা ত্রুটি'}। পুনরায় চেষ্টা করার জন্য নিচের বাটনে চাপ দিন।`
+          : `AI connection error: ${err.message || 'Unknown error'}. Please click retry below.`,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        isError: true,
+        failedQuery: queryText,
         isDemoMode: true
       };
       setMessages(prev => [...prev, errMsg]);
@@ -416,6 +439,26 @@ I understand Bengali script, Romanized Banglish (e.g. "Goru khabar khacche na ki
           </div>
         </div>
 
+        {/* Server Environment Variable Alert Banner (API Not Configured State) */}
+        {serverStatus.checked && !serverStatus.configured && aiConfig.provider === 'server-gemini' && (
+          <div className="bg-amber-50 border-b border-amber-200 px-3.5 py-1.5 flex items-center justify-between text-xs text-amber-900 shrink-0">
+            <div className="flex items-center space-x-2">
+              <ShieldAlert className="w-4 h-4 text-amber-600 shrink-0" />
+              <span className="text-[11px] font-medium">
+                {language === 'bn'
+                  ? 'সার্ভারে GEMINI_API_KEY এখনও যুক্ত করা হয়নি (অফলাইন এক্সপার্ট ইঞ্জিন সক্রিয়)'
+                  : 'Server GEMINI_API_KEY not set yet (Running on Offline Expert Engine)'}
+              </span>
+            </div>
+            <button
+              onClick={openSettings}
+              className="text-[11px] font-bold text-forest hover:underline shrink-0 ml-2"
+            >
+              {language === 'bn' ? 'যুক্ত করার নিয়ম ↗' : 'Setup Guide ↗'}
+            </button>
+          </div>
+        )}
+
         {/* Suggestion Pills Banner for Basic-Level Users */}
         <div className="bg-forest-50/70 border-b border-softBorder px-3.5 py-2 overflow-x-auto scrollbar-none flex items-center gap-1.5 shrink-0">
           <span className="text-[11px] font-bold text-forest shrink-0 flex items-center space-x-1 mr-1">
@@ -488,7 +531,37 @@ I understand Bengali script, Romanized Banglish (e.g. "Goru khabar khacche na ki
                     </div>
                   )}
 
-                  <p className="whitespace-pre-line leading-relaxed">{msg.text}</p>
+                  {/* Error & Retry Box */}
+                  {msg.isError ? (
+                    <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-status-error space-y-2">
+                      <div className="flex items-center space-x-1.5 font-bold text-xs">
+                        <AlertTriangle className="w-4 h-4 shrink-0 text-red-600" />
+                        <span>{language === 'bn' ? 'সংযোগ ত্রুটি' : 'Connection Error'}</span>
+                      </div>
+                      <p className="text-xs leading-relaxed text-red-700">{msg.text}</p>
+                      {msg.failedQuery && (
+                        <div className="pt-1 flex items-center space-x-2">
+                          <button
+                            type="button"
+                            onClick={() => handleSendMessage(msg.failedQuery!)}
+                            className="px-3 py-1.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition flex items-center space-x-1.5 active:scale-95 shadow-2xs"
+                          >
+                            <RotateCcw className="w-3.5 h-3.5" />
+                            <span>{language === 'bn' ? 'পুনরায় চেষ্টা করুন' : 'Retry'}</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={openSettings}
+                            className="px-2.5 py-1.5 text-xs text-red-700 hover:underline font-semibold"
+                          >
+                            {language === 'bn' ? 'সেটিংস পরীক্ষা' : 'Check Settings'}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="whitespace-pre-line leading-relaxed">{msg.text}</p>
+                  )}
 
                   {/* Follow-up Question Chips */}
                   {!isUser && msg.followUpQuestions && msg.followUpQuestions.length > 0 && (
