@@ -362,15 +362,17 @@ export async function getAgriAiResponseAsync(
   history: ChatMessage[] = [],
   options?: {
     responseLanguage?: 'auto' | 'bn' | 'en';
+    provider?: import('./aiConfigService.ts').AiProviderType;
   }
 ): Promise<AiResponseResult> {
   const config = getAiConfig();
+  const activeProvider = options?.provider || config.provider;
   const pref = options?.responseLanguage || config.responseLanguage || 'auto';
   const targetLang = resolveResponseLanguage(query, pref);
   const langDetection = detectLanguage(query);
 
-  // If configured for Server-Side Secure Gemini (Default)
-  if (config.provider === 'server-gemini') {
+  // 1. If configured for Server-Side Secure Gemini (Production & Dev with proxy)
+  if (activeProvider === 'server-gemini') {
     try {
       const llmResult = await queryLlmApi(config, query, history, targetLang);
       return {
@@ -378,27 +380,16 @@ export async function getAgriAiResponseAsync(
         isEmergency: llmResult.isEmergency,
         actionCard: llmResult.actionCard,
         isDemoMode: false,
-        providerUsed: 'Google Gemini 1.5 Flash (Server-Secured)',
-        modelUsed: llmResult.modelUsed || 'gemini-1.5-flash',
+        providerUsed: llmResult.providerUsed || 'Google Gemini AI',
+        modelUsed: llmResult.modelUsed || 'gemini-3.5-flash',
         detectedLanguage: langDetection.detected,
         dominantLanguage: langDetection.dominant
       };
     } catch (err: any) {
-      // In local dev without live serverless or if GEMINI_API_KEY is pending in Vercel
-      console.warn('Server Gemini call failed or offline, falling back to AgroNex Expert Synthesis:', err?.message || err);
-      const fallback = synthesizeDemoResponse(query, targetLang, history);
-      return {
-        reply: fallback.reply,
-        isEmergency: fallback.isEmergency,
-        actionCard: fallback.actionCard,
-        isDemoMode: true,
-        providerUsed: 'AgroNex Expert Engine (Fallback)',
-        modelUsed: 'agronex-knowledge-v2',
-        detectedLanguage: langDetection.detected,
-        dominantLanguage: langDetection.dominant,
-        followUpQuestions: fallback.followUpQuestions,
-        sector: fallback.sector
-      };
+      console.error('[AgroNex AI] Server Gemini call failed:', err?.message || err);
+      // DO NOT silently fall back to hardcoded FAQ answers in Gemini mode!
+      // Bubble the error so the UI displays the genuine error state and retry option.
+      throw err;
     }
   }
 

@@ -75,21 +75,25 @@ async function runBackendTests() {
   console.log('\nTEST 2: Missing GEMINI_API_KEY handling');
   {
     const originalKey = process.env.GEMINI_API_KEY;
-    delete process.env.GEMINI_API_KEY;
+    process.env.GEMINI_API_KEY = '';
 
     const mock = createMockHttp('POST', { message: 'ধানের ব্লাস্ট রোগ' });
     await handler(mock.req, mock.res);
     const data = mock.getData();
     const code = mock.getStatusCode();
 
-    if (code === 503 && data.code === 'API_NOT_CONFIGURED' && data.isDemoMode === true) {
-      console.log('  ✅ PASSED: Returns 503 API_NOT_CONFIGURED with isDemoMode: true');
+    if (code === 503 && data.code === 'API_NOT_CONFIGURED') {
+      console.log('  ✅ PASSED: Returns 503 API_NOT_CONFIGURED when GEMINI_API_KEY is not configured');
       passed++;
     } else {
       console.log('  ❌ FAILED: Unexpected response for missing key', code, data);
     }
 
-    if (originalKey) process.env.GEMINI_API_KEY = originalKey;
+    if (originalKey !== undefined) {
+      process.env.GEMINI_API_KEY = originalKey;
+    } else {
+      delete process.env.GEMINI_API_KEY;
+    }
   }
 
   // TEST 3: Empty message rejection (400)

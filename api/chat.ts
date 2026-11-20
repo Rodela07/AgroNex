@@ -1,13 +1,49 @@
 // AgroNex Bangladesh - Serverless Gemini AI Backend
-// Uses official @google/genai SDK to securely query Gemini 1.5 Flash.
-// The API key is read solely from process.env.GEMINI_API_KEY and never exposed to the client.
+// Uses official @google/genai SDK to securely query Gemini without exposing secrets to the client.
 
 import { GoogleGenAI } from '@google/genai';
+import fs from 'fs';
+import path from 'path';
 
 interface ChatHistoryItem {
   id?: string;
   sender: 'user' | 'ai';
   text: string;
+}
+
+/**
+ * Safely resolves GEMINI_API_KEY from environment or local env files.
+ */
+function resolveGeminiApiKey(): string | undefined {
+  if (process.env.GEMINI_API_KEY !== undefined) {
+    const trimmed = process.env.GEMINI_API_KEY.trim();
+    return trimmed.length > 0 ? trimmed : undefined;
+  }
+
+  // Fallback for local development if process.env was not populated by shell
+  const candidatePaths = [
+    path.resolve(process.cwd(), '.env.local'),
+    path.resolve(process.cwd(), 'src', '.env.local'),
+    path.resolve(process.cwd(), '.env')
+  ];
+
+  for (const envPath of candidatePaths) {
+    try {
+      if (fs.existsSync(envPath)) {
+        const raw = fs.readFileSync(envPath, 'utf8');
+        const match = raw.match(/GEMINI_API_KEY\s*=\s*([^\r\n]+)/);
+        if (match && match[1].trim().length > 0) {
+          const key = match[1].trim();
+          process.env.GEMINI_API_KEY = key; // cache for process
+          return key;
+        }
+      }
+    } catch {
+      // Ignore read errors
+    }
+  }
+
+  return undefined;
 }
 
 export default async function handler(req: any, res: any) {
@@ -20,16 +56,18 @@ export default async function handler(req: any, res: any) {
     return res.status(200).end();
   }
 
+  const apiKey = resolveGeminiApiKey();
+
   // Health-check endpoint: verify backend availability without exposing secrets
   if (req.method === 'GET') {
-    const isConfigured = !!process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY.trim().length > 0;
+    const isConfigured = !!apiKey && apiKey.length > 0;
     return res.status(200).json({
       status: 'online',
       service: 'AgroNex Serverless AI Backend',
       sdk: '@google/genai',
       geminiConfigured: isConfigured,
-      model: process.env.GEMINI_MODEL || 'gemini-1.5-flash',
-      version: '2.5.0'
+      model: process.env.GEMINI_MODEL || 'gemini-3.5-flash',
+      version: '3.0.0'
     });
   }
 
@@ -41,14 +79,14 @@ export default async function handler(req: any, res: any) {
     });
   }
 
-  // 1. Validate API Key from Server Environment Variables ONLY
-  const apiKey = process.env.GEMINI_API_KEY?.trim();
+  // 1. Validate API Key from Server Environment
   if (!apiKey || apiKey.length === 0) {
+    console.warn('[AgroNex Serverless] GEMINI_API_KEY is not configured on server.');
     return res.status(503).json({
       success: false,
       code: 'API_NOT_CONFIGURED',
-      error: 'GEMINI_API_KEY is not configured in server environment variables.',
-      isDemoMode: true
+      error: 'GEMINI_API_KEY is not configured in server environment variables. Please add GEMINI_API_KEY in Vercel Project Settings.',
+      isDemoMode: false
     });
   }
 
@@ -95,7 +133,9 @@ export default async function handler(req: any, res: any) {
     targetLang = hasBengaliScript || banglishMarkers ? 'bn' : 'en';
   }
 
-  const model = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
+  // Model prioritization: gemini-3.5-flash is current production default
+  const requestedModel = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
+  const candidateModels = [requestedModel, 'gemini-3.8-flash', 'gemini-2.5-flash'];
 
   const AGRONEX_SYSTEM_PROMPT = `You are AgroNex AI (এগ্রোনেক্স এআই কৃষি সহকারী), a dedicated multilingual agricultural assistant designed to help ordinary farmers and agricultural communities in Bangladesh.
 
@@ -151,7 +191,7 @@ If relevant to the question, include exactly one action tag:
       .slice(-6);
 
     for (const msg of validHistory) {
-      const sanitizedText = msg.text.trim().slice(0, 1000); // cap history item size
+      const sanitizedText = msg.text.trim().slice(0, 1000);
       contents.push({
         role: msg.sender === 'user' ? 'user' : 'model',
         parts: [{ text: sanitizedText }]
@@ -168,134 +208,151 @@ If relevant to the question, include exactly one action tag:
   // 5. Initialize Official @google/genai SDK
   const ai = new GoogleGenAI({ apiKey });
 
-  // 6. Execute with Timeout Safeguard (15 seconds)
-  const timeoutMs = 15000;
-  const timeoutPromise = new Promise((_, reject) => {
-    setTimeout(() => reject(new Error('REQUEST_TIMEOUT')), timeoutMs);
-  });
+  // Safe server-side diagnostic logging (NEVER LOG API KEY)
+  console.log(`[AgroNex Serverless] Incoming prompt: length=${rawQuery.length}, lang=${targetLang}, historyTurns=${contents.length - 1}`);
 
-  try {
-    const generatePromise = ai.models.generateContent({
-      model,
-      contents,
-      config: {
-        systemInstruction: AGRONEX_SYSTEM_PROMPT,
-        temperature: 0.6,
-        maxOutputTokens: 1024
-      }
-    });
+  let lastError: any = null;
+  let successfulResponse: any = null;
+  let activeModelUsed = requestedModel;
 
-    const response: any = await Promise.race([generatePromise, timeoutPromise]);
-    const rawAnswer = response?.text || response?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-
-    if (!rawAnswer) {
-      return res.status(502).json({
-        success: false,
-        code: 'EMPTY_AI_RESPONSE',
-        error: 'Gemini model returned an empty response.',
-        isDemoMode: true
+  // Try candidate models in order of priority with a 15-second timeout
+  for (const modelToTry of candidateModels) {
+    try {
+      activeModelUsed = modelToTry;
+      const timeoutMs = 15000;
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('REQUEST_TIMEOUT')), timeoutMs);
       });
-    }
 
-    // 7. Parse Emergency and Action Tags
-    let isEmergency = false;
-    let cleanedText = rawAnswer;
+      const generatePromise = ai.models.generateContent({
+        model: modelToTry,
+        contents,
+        config: {
+          systemInstruction: AGRONEX_SYSTEM_PROMPT,
+          temperature: 0.6,
+          maxOutputTokens: 1024
+        }
+      });
 
-    if (cleanedText.includes('[EMERGENCY:true]')) {
-      isEmergency = true;
-      cleanedText = cleanedText.replace(/\[EMERGENCY:true\]/g, '').trim();
-    }
-
-    let actionCard: any = undefined;
-    const actionMatch = cleanedText.match(/\[ACTION:(fertilizer|vet_booking|expert_booking|market_prices|troubleshooter)\]/);
-    if (actionMatch) {
-      const actionType = actionMatch[1];
-      cleanedText = cleanedText.replace(/\[ACTION:[a-z_]+\]/g, '').trim();
-
-      switch (actionType) {
-        case 'fertilizer':
-          actionCard = {
-            type: 'fertilizer',
-            labelBn: 'সার ক্যালকুলেটরে সরাসরি হিসাব দেখুন',
-            labelEn: 'Open Fertilizer Calculator',
-            tab: 'agriculture',
-            subtab: 'calculator'
-          };
-          break;
-        case 'vet_booking':
-          actionCard = {
-            type: 'vet_booking',
-            labelBn: 'রেজিস্টার্ড পশু ডাক্তারের সাথে কথা বলুন',
-            labelEn: 'Consult Veterinary Surgeon',
-            tab: 'experts'
-          };
-          break;
-        case 'expert_booking':
-          actionCard = {
-            type: 'expert_booking',
-            labelBn: 'বিসিএস মৎস্য/কৃষি কর্মকর্তার পরামর্শ নিন',
-            labelEn: 'Consult Agricultural Specialist',
-            tab: 'experts'
-          };
-          break;
-        case 'market_prices':
-          actionCard = {
-            type: 'market_prices',
-            labelBn: 'আজকের পাইকারি বাজারদর দেখুন',
-            labelEn: 'View Live Market Rates',
-            tab: 'prices'
-          };
-          break;
-        case 'troubleshooter':
-          actionCard = {
-            type: 'fertilizer',
-            labelBn: 'রোগ ও বালাই নির্দেশিকা দেখুন',
-            labelEn: 'Open Pest Troubleshooter',
-            tab: 'agriculture',
-            subtab: 'troubleshooter'
-          };
-          break;
+      successfulResponse = await Promise.race([generatePromise, timeoutPromise]);
+      if (successfulResponse) break;
+    } catch (err: any) {
+      lastError = err;
+      console.warn(`[AgroNex Serverless] Model ${modelToTry} attempt failed: ${err?.message?.slice(0, 120)}`);
+      // If error is timeout or auth error, do not retry other models
+      if (err?.message === 'REQUEST_TIMEOUT' || /API_KEY_INVALID|UNAUTHENTICATED/i.test(err?.message || '')) {
+        break;
       }
     }
+  }
 
-    // Return sanitized JSON response (Notice: apiKey is NEVER included)
-    return res.status(200).json({
-      success: true,
-      reply: cleanedText,
-      isEmergency,
-      actionCard,
-      provider: 'Google Gemini (Server-Secured)',
-      model,
-      detectedLanguage: hasBengaliScript ? 'bn' : (banglishMarkers ? 'banglish' : 'en'),
-      dominantLanguage: targetLang
-    });
-
-  } catch (error: any) {
-    // Timeout handling
-    if (error?.message === 'REQUEST_TIMEOUT') {
+  if (!successfulResponse) {
+    if (lastError?.message === 'REQUEST_TIMEOUT') {
       return res.status(504).json({
         success: false,
         code: 'TIMEOUT',
-        error: 'Gemini request timed out. Please try again.',
-        isDemoMode: true
+        error: 'Gemini AI request timed out after 15 seconds. Please try again.',
+        isDemoMode: false
       });
     }
 
-    // Sanitize error logging: NEVER log API key or private data
-    const errorMessage = error?.message || 'Unknown Gemini API error';
-    console.error(`[AgroNex Serverless Error] Model: ${model} | Error: ${errorMessage}`);
+    const errMessage = lastError?.message || 'Gemini API call failed';
+    const isAuth = /API_KEY_INVALID|UNAUTHENTICATED|permission/i.test(errMessage);
+    const isQuota = /RESOURCE_EXHAUSTED|quota|rate|high demand/i.test(errMessage);
 
-    // Map common Gemini API error status codes
-    const isAuthError = /API_KEY_INVALID|UNAUTHENTICATED|permission/i.test(errorMessage);
-    const isQuotaError = /RESOURCE_EXHAUSTED|quota|rate/i.test(errorMessage);
-
-    return res.status(isAuthError ? 401 : (isQuotaError ? 429 : 500)).json({
+    return res.status(isAuth ? 401 : (isQuota ? 429 : 500)).json({
       success: false,
-      code: isAuthError ? 'INVALID_API_KEY' : (isQuotaError ? 'QUOTA_EXCEEDED' : 'API_ERROR'),
-      error: isAuthError 
-        ? 'Invalid GEMINI_API_KEY configured on server.' 
-        : (isQuotaError ? 'Gemini API quota exceeded, please retry shortly.' : 'Error contacting Gemini API.'),
-      isDemoMode: true
+      code: isAuth ? 'INVALID_API_KEY' : (isQuota ? 'QUOTA_EXCEEDED' : 'API_ERROR'),
+      error: isAuth
+        ? 'Invalid GEMINI_API_KEY. Please verify your API key in Vercel settings.'
+        : (isQuota ? 'Gemini API is currently experiencing high demand or quota limits. Please retry in a few moments.' : `Gemini API error: ${errMessage}`),
+      isDemoMode: false
     });
   }
+
+  const rawAnswer = successfulResponse?.text || successfulResponse?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+  if (!rawAnswer || rawAnswer.trim().length === 0) {
+    return res.status(502).json({
+      success: false,
+      code: 'EMPTY_AI_RESPONSE',
+      error: 'Gemini model returned an empty response.',
+      isDemoMode: false
+    });
+  }
+
+  // 6. Parse Emergency and Action Tags
+  let isEmergency = false;
+  let cleanedText = rawAnswer;
+
+  if (cleanedText.includes('[EMERGENCY:true]')) {
+    isEmergency = true;
+    cleanedText = cleanedText.replace(/\[EMERGENCY:true\]/g, '').trim();
+  }
+
+  let actionCard: any = undefined;
+  const actionMatch = cleanedText.match(/\[ACTION:(fertilizer|vet_booking|expert_booking|market_prices|troubleshooter)\]/);
+  if (actionMatch) {
+    const actionType = actionMatch[1];
+    cleanedText = cleanedText.replace(/\[ACTION:[a-z_]+\]/g, '').trim();
+
+    switch (actionType) {
+      case 'fertilizer':
+        actionCard = {
+          type: 'fertilizer',
+          labelBn: 'সার ক্যালকুলেটরে সরাসরি হিসাব দেখুন',
+          labelEn: 'Open Fertilizer Calculator',
+          tab: 'agriculture',
+          subtab: 'calculator'
+        };
+        break;
+      case 'vet_booking':
+        actionCard = {
+          type: 'vet_booking',
+          labelBn: 'রেজিস্টার্ড পশু ডাক্তারের সাথে কথা বলুন',
+          labelEn: 'Consult Veterinary Surgeon',
+          tab: 'experts'
+        };
+        break;
+      case 'expert_booking':
+        actionCard = {
+          type: 'expert_booking',
+          labelBn: 'বিসিএস মৎস্য/কৃষি কর্মকর্তার পরামর্শ নিন',
+          labelEn: 'Consult Agricultural Specialist',
+          tab: 'experts'
+        };
+        break;
+      case 'market_prices':
+        actionCard = {
+          type: 'market_prices',
+          labelBn: 'আজকের পাইকারি বাজারদর দেখুন',
+          labelEn: 'View Live Market Rates',
+          tab: 'prices'
+        };
+        break;
+      case 'troubleshooter':
+        actionCard = {
+          type: 'fertilizer',
+          labelBn: 'রোগ ও বালাই নির্দেশিকা দেখুন',
+          labelEn: 'Open Pest Troubleshooter',
+          tab: 'agriculture',
+          subtab: 'troubleshooter'
+        };
+        break;
+    }
+  }
+
+  console.log(`[AgroNex Serverless] Success: model=${activeModelUsed}, replyLength=${cleanedText.length}, emergency=${isEmergency}`);
+
+  // Return real live Gemini response
+  return res.status(200).json({
+    success: true,
+    reply: cleanedText,
+    isEmergency,
+    actionCard,
+    provider: 'Google Gemini AI',
+    model: activeModelUsed,
+    detectedLanguage: hasBengaliScript ? 'bn' : (banglishMarkers ? 'banglish' : 'en'),
+    dominantLanguage: targetLang
+  });
 }

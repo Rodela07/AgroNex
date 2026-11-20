@@ -100,7 +100,7 @@ async function runMultilingualTests() {
     const langDetect = detectLanguage(tc.query);
     const resolvedLang = resolveResponseLanguage(tc.query, 'auto');
     const intent = analyzeAgriIntent(tc.query);
-    const response = await getAgriAiResponseAsync(tc.query, [], { responseLanguage: 'auto' });
+    const response = await getAgriAiResponseAsync(tc.query, [], { responseLanguage: 'auto', provider: 'demo' });
 
     console.log(`\n-------------------------------------------------------------`);
     console.log(`TEST #${tc.id}: "${tc.query}"`);
@@ -143,7 +143,7 @@ async function runMultilingualTests() {
   const followUpResponse = await getAgriAiResponseAsync(
     'সার কতটুকু দিতে হবে?',
     [initialUserMsg, initialAiMsg],
-    { responseLanguage: 'auto' }
+    { responseLanguage: 'auto', provider: 'demo' }
   );
 
   console.log(`  • Follow-up Query: "সার কতটুকু দিতে হবে?"`);

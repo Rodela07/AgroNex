@@ -68,7 +68,7 @@ export const AgriChatbotModal: React.FC<AgriChatbotModalProps> = ({
   const [serverStatus, setServerStatus] = useState<{ checked: boolean; configured: boolean; model: string }>({
     checked: false,
     configured: true,
-    model: 'gemini-1.5-flash'
+    model: 'gemini-3.5-flash'
   });
 
   useEffect(() => {
@@ -78,7 +78,7 @@ export const AgriChatbotModal: React.FC<AgriChatbotModalProps> = ({
           setServerStatus({ checked: true, configured: st.geminiConfigured, model: st.model });
         })
         .catch(() => {
-          setServerStatus({ checked: true, configured: false, model: 'gemini-1.5-flash' });
+          setServerStatus({ checked: true, configured: false, model: 'gemini-3.5-flash' });
         });
     }
   }, [isOpen, aiConfig.provider]);
@@ -202,7 +202,8 @@ I understand Bengali script, Romanized Banglish (e.g. "Goru khabar khacche na ki
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         isError: true,
         failedQuery: queryText,
-        isDemoMode: true
+        isDemoMode: false,
+        providerUsed: 'Gemini Error'
       };
       setMessages(prev => [...prev, errMsg]);
     }
@@ -318,7 +319,9 @@ I understand Bengali script, Romanized Banglish (e.g. "Goru khabar khacche na ki
                 <Bot className="w-6 h-6 text-forest-leaf" />
               </div>
               <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 border-2 border-forest rounded-full ${
-                aiConfig.provider === 'demo' ? 'bg-amber-400' : 'bg-emerald-400 animate-pulse'
+                aiConfig.provider === 'demo' || (aiConfig.provider === 'server-gemini' && serverStatus.checked && !serverStatus.configured)
+                  ? 'bg-amber-400' 
+                  : 'bg-emerald-400 animate-pulse'
               }`} />
             </div>
 
@@ -328,21 +331,27 @@ I understand Bengali script, Romanized Banglish (e.g. "Goru khabar khacche na ki
                   {language === 'bn' ? 'এগ্রোনেক্স এআই সহকারী' : 'AgroNex AI Advisor'}
                 </h3>
                 
-                {/* Provider Pill (Server Gemini vs Demo) */}
+                {/* Visible Status Indicator: Gemini AI Connected vs Demo/FAQ Mode */}
                 <button
                   onClick={openSettings}
-                  className={`px-2 py-0.5 text-[10px] font-bold rounded-full border transition flex items-center space-x-1 ${
-                    aiConfig.provider === 'demo'
+                  className={`px-2 py-0.5 text-[10px] font-bold rounded-full border transition flex items-center space-x-1.5 ${
+                    aiConfig.provider === 'demo' || (aiConfig.provider === 'server-gemini' && serverStatus.checked && !serverStatus.configured)
                       ? 'bg-amber-500/20 text-amber-200 border-amber-400/40 hover:bg-amber-500/30'
                       : 'bg-emerald-500/20 text-emerald-200 border-emerald-400/40 hover:bg-emerald-500/30'
                   }`}
-                  title="Configure AI Provider & API Key"
+                  title="Click to view AI Configuration & Diagnostics"
                 >
-                  <Cpu className="w-2.5 h-2.5" />
+                  <span className={`w-1.5 h-1.5 rounded-full ${
+                    aiConfig.provider === 'demo' || (aiConfig.provider === 'server-gemini' && serverStatus.checked && !serverStatus.configured)
+                      ? 'bg-amber-400'
+                      : 'bg-emerald-400 animate-ping'
+                  }`} />
                   <span>
                     {aiConfig.provider === 'server-gemini' 
-                      ? 'Gemini 1.5 Flash (Server)' 
-                      : (aiConfig.provider === 'demo' ? 'ডেমো ইঞ্জিন' : aiConfig.model)}
+                      ? (serverStatus.checked && !serverStatus.configured 
+                          ? 'Demo/FAQ Mode (Key Unset)' 
+                          : `Gemini AI Connected (${serverStatus.model || 'gemini-3.5-flash'})`)
+                      : (aiConfig.provider === 'demo' ? 'Demo/FAQ Mode' : `${aiConfig.provider.toUpperCase()} AI Connected`)}
                   </span>
                 </button>
               </div>
@@ -501,9 +510,13 @@ I understand Bengali script, Romanized Banglish (e.g. "Goru khabar khacche na ki
                     <>
                       <span>•</span>
                       <span className={`px-1.5 py-0.2 rounded font-semibold ${
-                        msg.isDemoMode ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'
+                        msg.isError
+                          ? 'bg-rose-100 text-rose-800'
+                          : (msg.isDemoMode ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800')
                       }`}>
-                        {msg.isDemoMode ? 'Demo Mode' : (msg.providerUsed || 'Live LLM')}
+                        {msg.isError 
+                          ? 'Error' 
+                          : (msg.isDemoMode ? 'Demo / FAQ Mode' : (msg.providerUsed || 'Gemini AI'))}
                       </span>
                     </>
                   )}
