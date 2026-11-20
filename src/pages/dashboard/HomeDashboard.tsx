@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { WeatherWidget } from '../../components/weather/WeatherWidget';
 import { CreateReminderModal } from '../../components/common/CreateReminderModal';
 import { 
   Sprout, 
@@ -10,18 +9,20 @@ import {
   Plus, 
   Bot, 
   CalendarCheck, 
-  CheckCircle2, 
-  Clock, 
-  TrendingUp, 
-  AlertTriangle, 
+  Check, 
   ArrowRight, 
   Sparkles, 
-  Check, 
+  MapPin, 
+  Thermometer, 
+  Droplets, 
+  Wind, 
+  CloudRain, 
   ChevronRight,
-  ShieldAlert,
-  UserCheck
+  Clock,
+  AlertTriangle,
+  Sun
 } from 'lucide-react';
-import { formatCurrency, formatNumber, toBengaliDigits } from '../../utils/formatters';
+import { formatCurrency, toBengaliDigits } from '../../utils/formatters';
 
 interface HomeDashboardProps {
   onNavigate: (tab: string, subtab?: string) => void;
@@ -32,18 +33,28 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({ onNavigate, onOpen
   const { 
     language, 
     user, 
-    activeRole, 
-    lands, 
-    livestockFarms, 
-    ponds, 
     listings, 
-    inquiries, 
-    orders, 
-    marketPrices, 
     reminders, 
-    toggleReminderComplete,
-    setShowPhase2Modal
+    toggleReminderComplete 
   } = useApp();
+
+  const [showReminderModal, setShowReminderModal] = useState(false);
+
+  // Time-appropriate greeting
+  const hour = new Date().getHours();
+  const getGreeting = () => {
+    if (language === 'bn') {
+      if (hour < 12) return 'শুভ সকাল';
+      if (hour < 16) return 'শুভ দুপুর';
+      if (hour < 19) return 'শুভ বিকেল';
+      return 'শুভ সন্ধ্যা';
+    } else {
+      if (hour < 12) return 'Good Morning';
+      if (hour < 16) return 'Good Afternoon';
+      if (hour < 19) return 'Good Evening';
+      return 'Welcome';
+    }
+  };
 
   const todayStr = new Date().toLocaleDateString(language === 'bn' ? 'bn-BD' : 'en-US', {
     weekday: 'long',
@@ -53,435 +64,423 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({ onNavigate, onOpen
   });
 
   const pendingReminders = reminders.filter(r => !r.isCompleted);
-  const completedReminders = reminders.filter(r => r.isCompleted);
 
-  const [showReminderModal, setShowReminderModal] = useState(false);
+  // Simulated compact weather for user's district
+  const weather = {
+    temp: 28,
+    conditionBn: 'আংশিক মেঘলা',
+    conditionEn: 'Partly Cloudy',
+    humidity: 78,
+    windKmh: 14,
+    rainChance: 65,
+    adviceBn: 'আগামী ৩৬ ঘণ্টায় বৃষ্টির সম্ভাবনা রয়েছে; সার ছিটানো স্থগিত রাখুন ও নিষ্কাশন নালা পরিষ্কার রাখুন।',
+    adviceEn: 'Rain expected within 36 hours. Postpone top-dressing fertilizers and clear drainage ditches.'
+  };
+
+  // Published marketplace listings for preview (up to 4 items)
+  const recentListings = listings.filter(l => l.status === 'published').slice(0, 4);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 max-w-6xl mx-auto">
 
-      {/* Top Welcome Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-softBorder shadow-2xs">
+      {/* 1. WELCOME MESSAGE & USER LOCATION */}
+      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-softBorder shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <div className="flex items-center space-x-2">
-            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-forest-light text-forest border border-forest/20">
-              {language === 'bn' ? 'স্বাগতম' : 'Welcome'}
+          <div className="flex items-center space-x-2 text-xs text-secondaryText mb-1">
+            <span className="font-semibold text-forest">
+              {getGreeting()},
             </span>
-            <span className="text-xs text-secondaryText font-medium">
-              {todayStr}
-            </span>
+            <span>•</span>
+            <span>{todayStr}</span>
           </div>
-          <h1 className="text-xl sm:text-2xl font-black text-forest-dark mt-1">
+          <h1 className="text-xl sm:text-2xl font-black text-forest-dark tracking-tight">
             {user.name}
           </h1>
-          <p className="text-xs text-secondaryText mt-0.5">
-            {user.village}, {user.upazila}, {user.district} • {user.businessName || 'প্রাকৃতিক চাষাবাদ'}
-          </p>
+          <div className="flex items-center space-x-1.5 text-xs text-secondaryText mt-1">
+            <MapPin className="w-3.5 h-3.5 text-clay shrink-0" />
+            <span className="font-medium">
+              {user.village ? `${user.village}, ` : ''}{user.upazila}, {user.district}
+            </span>
+            {user.businessName && (
+              <>
+                <span className="text-mutedText hidden sm:inline">•</span>
+                <span className="hidden sm:inline text-primaryText font-semibold">{user.businessName}</span>
+              </>
+            )}
+          </div>
         </div>
 
-        {/* Quick Role Context Pill */}
-        <div className="flex items-center space-x-2 bg-rice p-2 rounded-xl border border-softBorder">
-          <div className="w-8 h-8 rounded-lg bg-forest text-white flex items-center justify-center font-bold text-xs">
-            <UserCheck className="w-4 h-4" />
-          </div>
-          <div>
-            <p className="text-[10px] uppercase font-bold text-mutedText">
-              {language === 'bn' ? 'সক্রিয় দৃষ্টিভঙ্গি' : 'Active View'}
-            </p>
-            <p className="text-xs font-bold text-forest-dark">
-              {activeRole}
-            </p>
-          </div>
+        <div className="self-start sm:self-auto flex items-center space-x-2">
+          <span className="px-3 py-1.5 rounded-xl bg-forest-light text-forest font-bold text-xs border border-forest/20">
+            {language === 'bn' ? 'সক্রিয় কৃষক প্রোফাইল' : 'Active Farmer Profile'}
+          </span>
         </div>
       </div>
 
-      {/* Friendly AI Chat Prompt Banner */}
-      <div className="bg-gradient-to-r from-forest to-forest-dark p-4 sm:p-5 rounded-2xl text-white shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
-        <div className="flex items-center space-x-3.5 w-full md:w-auto">
-          <div className="w-12 h-12 rounded-2xl bg-white/15 border border-white/20 flex items-center justify-center shrink-0">
-            <Bot className="w-7 h-7 text-forest-leaf" />
+      {/* 2. COMPACT WEATHER INFORMATION */}
+      <div className="bg-gradient-to-r from-forest-dark via-forest to-forest-800 text-white p-4 sm:p-5 rounded-2xl shadow-xs overflow-hidden">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          
+          {/* Left: Temp & Condition */}
+          <div className="flex items-center space-x-3.5">
+            <div className="w-12 h-12 rounded-2xl bg-white/10 border border-white/15 flex items-center justify-center shrink-0">
+              <Sun className="w-6 h-6 text-harvest-light" />
+            </div>
+            <div>
+              <div className="flex items-baseline space-x-2">
+                <span className="text-2xl sm:text-3xl font-black tracking-tight">
+                  {language === 'bn' ? toBengaliDigits(weather.temp) : weather.temp}°C
+                </span>
+                <span className="text-xs sm:text-sm font-semibold text-rice/90">
+                  {language === 'bn' ? weather.conditionBn : weather.conditionEn}
+                </span>
+              </div>
+              <p className="text-[11px] text-rice/70 mt-0.5">
+                {user.district} • {language === 'bn' ? 'আজকের আঞ্চলিক পূর্বাভাস' : "Today's regional forecast"}
+              </p>
+            </div>
           </div>
-          <div>
-            <div className="flex items-center space-x-2">
-              <h2 className="text-base sm:text-lg font-bold leading-tight">
-                {language === 'bn' ? 'যেকোনো কৃষি বা খামারের প্রশ্ন করুন' : 'Ask Any Agricultural Question'}
-              </h2>
-              <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-forest-leaf/25 text-forest-leaf border border-forest-leaf/40">
-                AI ২৪/৭
+
+          {/* Center: Compact Micro Indicators */}
+          <div className="grid grid-cols-3 gap-3 text-center border-t md:border-t-0 md:border-l border-white/15 pt-3 md:pt-0 md:pl-5">
+            <div>
+              <div className="flex items-center justify-center space-x-1 text-sky-200">
+                <Droplets className="w-3.5 h-3.5" />
+                <span className="text-xs font-bold">
+                  {language === 'bn' ? toBengaliDigits(weather.humidity) : weather.humidity}%
+                </span>
+              </div>
+              <span className="text-[10px] text-rice/70 block mt-0.5">
+                {language === 'bn' ? 'আর্দ্রতা' : 'Humidity'}
               </span>
             </div>
-            <p className="text-xs text-rice/80 mt-0.5">
-              {language === 'bn' 
-                ? 'বাংলা বা ইংরেজিতে লিখুন — সার হিসাব, রোগবালাই প্রতিকার বা বাজারদর' 
-                : 'Crops, BARC fertilizers, livestock diseases, fish pond care & market rates'}
-            </p>
+
+            <div>
+              <div className="flex items-center justify-center space-x-1 text-forest-leaf">
+                <Wind className="w-3.5 h-3.5" />
+                <span className="text-xs font-bold">
+                  {language === 'bn' ? toBengaliDigits(weather.windKmh) : weather.windKmh} km/h
+                </span>
+              </div>
+              <span className="text-[10px] text-rice/70 block mt-0.5">
+                {language === 'bn' ? 'বাতাস' : 'Wind'}
+              </span>
+            </div>
+
+            <div>
+              <div className="flex items-center justify-center space-x-1 text-blue-200">
+                <CloudRain className="w-3.5 h-3.5" />
+                <span className="text-xs font-bold">
+                  {language === 'bn' ? toBengaliDigits(weather.rainChance) : weather.rainChance}%
+                </span>
+              </div>
+              <span className="text-[10px] text-rice/70 block mt-0.5">
+                {language === 'bn' ? 'বৃষ্টির সম্ভাবনা' : 'Rain'}
+              </span>
+            </div>
           </div>
+
         </div>
 
-        <div className="flex items-center space-x-2 w-full md:w-auto">
-          <button
-            onClick={() => onOpenChatbot ? onOpenChatbot() : onNavigate('agriculture', 'troubleshoot')}
-            className="w-full md:w-auto px-5 py-2.5 rounded-xl bg-forest-leaf hover:bg-forest-leaf/90 text-forest-dark font-bold text-xs sm:text-sm shadow-xs transition flex items-center justify-center space-x-2 cursor-pointer active:scale-95"
-          >
-            <Sparkles className="w-4 h-4 text-forest-dark" />
-            <span>{language === 'bn' ? 'এআই সহকারীর সাথে কথা বলুন' : 'Chat with Agri AI'}</span>
-          </button>
+        {/* Compact Farming Advisory Line */}
+        <div className="mt-3.5 pt-3 border-t border-white/15 flex items-start space-x-2 text-xs text-rice/90">
+          <AlertTriangle className="w-4 h-4 text-harvest shrink-0 mt-0.5" />
+          <p className="leading-relaxed">
+            <strong className="text-harvest-light">{language === 'bn' ? 'পরামর্শ:' : 'Advisory:'}</strong>{' '}
+            {language === 'bn' ? weather.adviceBn : weather.adviceEn}
+          </p>
         </div>
       </div>
 
-      {/* Weather Section with Multi-Sector Actionable Recommendations */}
-      <WeatherWidget />
-
-      {/* Quick Actions Toolbar */}
-      <div className="bg-warmWhite p-4 rounded-2xl border border-softBorder shadow-2xs">
+      {/* 3. FOUR CLEAR MODULE SHORTCUTS */}
+      <div>
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-xs font-bold text-forest-dark uppercase tracking-wider">
-            {language === 'bn' ? 'দ্রুত অ্যাকশন (Quick Actions)' : 'Quick Actions'}
-          </h3>
+          <h2 className="text-xs font-bold text-forest-dark uppercase tracking-wider">
+            {language === 'bn' ? 'প্রধান সেবা ও মডিউল' : 'Core Agricultural Modules'}
+          </h2>
           <span className="text-[11px] text-mutedText">
-            {language === 'bn' ? 'ক্লিক করে সরাসরি মডিউলে প্রবেশ করুন' : 'One-click shortcuts'}
+            {language === 'bn' ? 'প্রবেশ করতে যেকোনো মডিউলে চাপুন' : 'Select a module to manage'}
           </span>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          
+          {/* Agriculture */}
           <button
-            onClick={() => onOpenChatbot ? onOpenChatbot() : onNavigate('agriculture', 'troubleshoot')}
-            className="flex flex-col items-center p-3 rounded-xl bg-forest/10 hover:bg-forest/15 border border-forest/20 text-forest text-center transition group active:scale-95 min-h-[72px] justify-center cursor-pointer"
+            onClick={() => onNavigate('agriculture')}
+            className="card-premium p-4 sm:p-5 text-left hover:border-forest/50 transition-all duration-150 group active:scale-98 flex flex-col justify-between min-h-[110px] sm:min-h-[120px] cursor-pointer"
           >
-            <Bot className="w-5 h-5 text-forest-leaf mb-1 group-hover:scale-110 transition" />
-            <span className="text-xs font-bold">{language === 'bn' ? 'কৃষি এআই' : 'Ask AI'}</span>
+            <div className="flex items-center justify-between">
+              <div className="w-10 h-10 rounded-xl bg-forest-light text-forest flex items-center justify-center group-hover:scale-105 transition-transform">
+                <Sprout className="w-5 h-5 text-forest" />
+              </div>
+              <ChevronRight className="w-4 h-4 text-mutedText group-hover:text-forest group-hover:translate-x-0.5 transition" />
+            </div>
+            <div>
+              <h3 className="font-bold text-sm sm:text-base text-forest-dark mt-2 group-hover:text-forest transition">
+                {language === 'bn' ? 'কৃষি ব্যবস্থাপনা' : 'Agriculture'}
+              </h3>
+              <p className="text-[11px] text-secondaryText mt-0.5">
+                {language === 'bn' ? 'জমি প্লট, সার হিসাব ও রোগবালাই' : 'Crops, plots & fertilizer calculator'}
+              </p>
+            </div>
           </button>
 
+          {/* Livestock */}
           <button
-            onClick={() => onNavigate('agriculture', 'lands')}
-            className="flex flex-col items-center p-3 rounded-xl bg-rice hover:bg-white border border-softBorder text-primaryText text-center transition group active:scale-95 min-h-[72px] justify-center"
+            onClick={() => onNavigate('livestock')}
+            className="card-premium p-4 sm:p-5 text-left hover:border-clay/50 transition-all duration-150 group active:scale-98 flex flex-col justify-between min-h-[110px] sm:min-h-[120px] cursor-pointer"
           >
-            <Sprout className="w-5 h-5 text-forest mb-1 group-hover:scale-110 transition" />
-            <span className="text-xs font-bold">{language === 'bn' ? 'জমি যোগ' : 'Add Land'}</span>
+            <div className="flex items-center justify-between">
+              <div className="w-10 h-10 rounded-xl bg-clay-light/70 text-clay-dark flex items-center justify-center group-hover:scale-105 transition-transform">
+                <Beef className="w-5 h-5 text-clay" />
+              </div>
+              <ChevronRight className="w-4 h-4 text-mutedText group-hover:text-clay group-hover:translate-x-0.5 transition" />
+            </div>
+            <div>
+              <h3 className="font-bold text-sm sm:text-base text-forest-dark mt-2 group-hover:text-clay transition">
+                {language === 'bn' ? 'পশু ও খামারি' : 'Livestock'}
+              </h3>
+              <p className="text-[11px] text-secondaryText mt-0.5">
+                {language === 'bn' ? 'শেড, গবাদিপশু ও খাদ্য হিসাব' : 'Shed planning, feeding & health'}
+              </p>
+            </div>
           </button>
 
+          {/* Fisheries */}
           <button
-            onClick={() => onNavigate('livestock', 'farms')}
-            className="flex flex-col items-center p-3 rounded-xl bg-clay-light/60 hover:bg-clay-light border border-clay/20 text-clay-dark text-center transition group active:scale-95 min-h-[72px] justify-center"
+            onClick={() => onNavigate('fisheries')}
+            className="card-premium p-4 sm:p-5 text-left hover:border-river/50 transition-all duration-150 group active:scale-98 flex flex-col justify-between min-h-[110px] sm:min-h-[120px] cursor-pointer"
           >
-            <Beef className="w-5 h-5 text-clay mb-1 group-hover:scale-110 transition" />
-            <span className="text-xs font-bold">{language === 'bn' ? 'খামার যোগ' : 'Add Farm'}</span>
+            <div className="flex items-center justify-between">
+              <div className="w-10 h-10 rounded-xl bg-river-light text-river-dark flex items-center justify-center group-hover:scale-105 transition-transform">
+                <Fish className="w-5 h-5 text-river" />
+              </div>
+              <ChevronRight className="w-4 h-4 text-mutedText group-hover:text-river group-hover:translate-x-0.5 transition" />
+            </div>
+            <div>
+              <h3 className="font-bold text-sm sm:text-base text-forest-dark mt-2 group-hover:text-river transition">
+                {language === 'bn' ? 'মৎস্য চাষ' : 'Fisheries'}
+              </h3>
+              <p className="text-[11px] text-secondaryText mt-0.5">
+                {language === 'bn' ? 'পুকুর, পানির মান ও ৩-স্তর মিশ্র চাষ' : 'Pond profiles & water telemetry'}
+              </p>
+            </div>
           </button>
 
+          {/* Marketplace */}
           <button
-            onClick={() => onNavigate('fisheries', 'ponds')}
-            className="flex flex-col items-center p-3 rounded-xl bg-river/10 hover:bg-river/20 border border-river/25 text-river-dark text-center transition group active:scale-95 min-h-[72px] justify-center"
+            onClick={() => onNavigate('marketplace')}
+            className="card-premium p-4 sm:p-5 text-left hover:border-harvest/50 transition-all duration-150 group active:scale-98 flex flex-col justify-between min-h-[110px] sm:min-h-[120px] cursor-pointer"
           >
-            <Fish className="w-5 h-5 text-river mb-1 group-hover:scale-110 transition" />
-            <span className="text-xs font-bold">{language === 'bn' ? 'পুকুর যোগ' : 'Add Pond'}</span>
+            <div className="flex items-center justify-between">
+              <div className="w-10 h-10 rounded-xl bg-harvest-light text-harvest-dark flex items-center justify-center group-hover:scale-105 transition-transform">
+                <ShoppingBag className="w-5 h-5 text-harvest-dark" />
+              </div>
+              <ChevronRight className="w-4 h-4 text-mutedText group-hover:text-harvest-dark group-hover:translate-x-0.5 transition" />
+            </div>
+            <div>
+              <h3 className="font-bold text-sm sm:text-base text-forest-dark mt-2 group-hover:text-harvest-dark transition">
+                {language === 'bn' ? 'কৃষি মার্কেটপ্লেস' : 'Marketplace'}
+              </h3>
+              <p className="text-[11px] text-secondaryText mt-0.5">
+                {language === 'bn' ? 'সরাসরি পণ্য ক্রয়-বিক্রয় ও দরদাম' : 'Direct buying, selling & offers'}
+              </p>
+            </div>
           </button>
 
-          <button
-            onClick={() => onNavigate('marketplace', 'sell')}
-            className="flex flex-col items-center p-3 rounded-xl bg-clay-light hover:bg-clay/20 border border-clay/30 text-clay-dark text-center transition group active:scale-95 min-h-[72px] justify-center"
-          >
-            <ShoppingBag className="w-5 h-5 text-clay-dark mb-1 group-hover:scale-110 transition" />
-            <span className="text-xs font-bold">{language === 'bn' ? 'পণ্য বিক্রি' : 'Sell Produce'}</span>
-          </button>
-
-          <button
-            onClick={() => onNavigate('prices')}
-            className="flex flex-col items-center p-3 rounded-xl bg-harvest-light hover:bg-harvest/20 border border-harvest/30 text-harvest-dark text-center transition group active:scale-95 min-h-[72px] justify-center"
-          >
-            <TrendingUp className="w-5 h-5 text-harvest-dark mb-1 group-hover:scale-110 transition" />
-            <span className="text-xs font-bold">{language === 'bn' ? 'বাজার দর' : 'Market Prices'}</span>
-          </button>
-
-          <button
-            onClick={() => onNavigate('experts')}
-            className="flex flex-col items-center p-3 rounded-xl bg-forest-light hover:bg-forest-light/80 border border-forest/20 text-forest-dark text-center transition group col-span-2 sm:col-span-1 active:scale-95 min-h-[72px] justify-center"
-          >
-            <Sparkles className="w-5 h-5 text-harvest-dark mb-1 group-hover:scale-110 transition" />
-            <span className="text-xs font-bold">{language === 'bn' ? 'বিশেষজ্ঞ' : 'Find Expert'}</span>
-          </button>
         </div>
       </div>
 
-      {/* Main 2-Column Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-        {/* Left Column (2 Cols): Daily Activities & Farm Summary */}
-        <div className="lg:col-span-2 space-y-6">
-
-          {/* Daily Activities & Scheduled Reminders (Functional Outcome!) */}
-          <div className="bg-white p-5 rounded-2xl border border-softBorder shadow-2xs">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center space-x-2">
-                <CalendarCheck className="w-5 h-5 text-forest" />
-                <h3 className="text-sm font-bold text-forest-dark">
-                  {language === 'bn' ? 'আজকের কৃষি ও খামারি কার্যক্রম' : 'Today’s Farming Activities & Reminders'}
-                </h3>
-              </div>
-              <div className="flex items-center space-x-2">
-                <span className="text-xs text-secondaryText">
-                  {language === 'bn' ? `${pendingReminders.length} টি কাজ বাকি` : `${pendingReminders.length} pending`}
-                </span>
-                <button
-                  onClick={() => setShowReminderModal(true)}
-                  className="px-2.5 py-1 rounded-lg bg-forest/10 hover:bg-forest text-forest hover:text-white text-xs font-bold transition flex items-center space-x-1"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>{language === 'bn' ? 'নতুন রিমাইন্ডার' : 'Add'}</span>
-                </button>
-              </div>
+      {/* 4. SIMPLE AI ASSISTANT ENTRY POINT */}
+      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-softBorder shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-start sm:items-center space-x-3.5">
+          <div className="relative">
+            <div className="w-11 h-11 rounded-2xl bg-forest-light flex items-center justify-center text-forest shrink-0">
+              <Bot className="w-6 h-6 text-forest" />
             </div>
+            <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full" />
+          </div>
+          <div>
+            <div className="flex items-center space-x-2">
+              <h3 className="font-bold text-sm sm:text-base text-forest-dark">
+                {language === 'bn' ? 'কৃষি এআই সহকারী (Agri AI)' : 'Agri AI Assistant'}
+              </h3>
+              <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-forest-light text-forest border border-forest/20">
+                ২৪/৭
+              </span>
+            </div>
+            <p className="text-xs text-secondaryText mt-0.5">
+              {language === 'bn' 
+                ? 'ফসল, সার, পশু বা মাছের রোগবালাই নিয়ে যেকোনো প্রশ্ন লিখুন বা বলুন' 
+                : 'Ask any question about crops, fertilizers, livestock diseases or fish care'}
+            </p>
+          </div>
+        </div>
 
-            {reminders.length === 0 ? (
-              <p className="text-xs text-secondaryText text-center py-4">
-                {language === 'bn' ? 'কোনো রিমাইন্ডার নির্ধারিত নেই।' : 'No reminders set.'}
-              </p>
-            ) : (
-              <div className="space-y-2.5">
-                {reminders.map((rem) => (
-                  <div
-                    key={rem.id}
-                    onClick={() => toggleReminderComplete(rem.id)}
-                    className={`p-3 rounded-xl border flex items-center justify-between cursor-pointer transition ${
-                      rem.isCompleted
-                        ? 'bg-rice/50 border-softBorder text-mutedText line-through'
-                        : 'bg-warmWhite border-softBorder text-primaryText hover:border-forest/40 shadow-2xs'
-                    }`}
-                  >
-                    <div className="flex items-center space-x-3">
-                      <div className={`w-5 h-5 rounded-md border flex items-center justify-center transition ${
-                        rem.isCompleted ? 'bg-forest border-forest text-white' : 'border-mutedText bg-white'
-                      }`}>
-                        {rem.isCompleted && <Check className="w-3.5 h-3.5" />}
-                      </div>
-                      <div>
-                        <p className="text-xs font-bold">
-                          {language === 'bn' ? rem.titleBn : rem.title}
-                        </p>
-                        <p className="text-[11px] text-secondaryText mt-0.5">
-                          {rem.entityName} • {rem.stage} • {language === 'bn' ? toBengaliDigits(rem.date) : rem.date}
-                        </p>
-                      </div>
-                    </div>
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
-                      rem.priority === 'high' ? 'bg-red-50 text-status-error' : 'bg-rice text-secondaryText'
-                    }`}>
-                      {rem.priority}
-                    </span>
-                  </div>
-                ))}
-              </div>
+        <button
+          onClick={() => onOpenChatbot ? onOpenChatbot() : onNavigate('agriculture', 'troubleshoot')}
+          className="btn-primary text-xs sm:text-sm py-2.5 px-5 flex items-center justify-center space-x-2 cursor-pointer shrink-0 active:scale-95 shadow-xs"
+        >
+          <Sparkles className="w-4 h-4 text-forest-leaf" />
+          <span>{language === 'bn' ? 'প্রশ্ন করুন' : 'Ask a Question'}</span>
+          <ArrowRight className="w-4 h-4 ml-1" />
+        </button>
+      </div>
+
+      {/* 5. TODAY'S TASKS & REMINDERS */}
+      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-softBorder shadow-2xs">
+        <div className="flex items-center justify-between mb-3.5">
+          <div className="flex items-center space-x-2">
+            <CalendarCheck className="w-5 h-5 text-forest" />
+            <h2 className="text-sm sm:text-base font-bold text-forest-dark">
+              {language === 'bn' ? 'আজকের কাজ ও রিমাইন্ডার' : "Today's Tasks & Reminders"}
+            </h2>
+            {pendingReminders.length > 0 && (
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-status-warning border border-amber-200">
+                {language === 'bn' ? `${toBengaliDigits(pendingReminders.length)} টি বাকি` : `${pendingReminders.length} pending`}
+              </span>
             )}
           </div>
 
-          {/* Module Ecosystem Overview Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            
-            {/* Agriculture Summary */}
-            <div 
-              onClick={() => onNavigate('agriculture')}
-              className="p-4 rounded-2xl bg-white border border-softBorder hover:border-forest/40 cursor-pointer shadow-2xs transition group"
-            >
-              <div className="flex items-center justify-between mb-2">
-                <span className="p-2 rounded-xl bg-emerald-50 text-emerald-800">
-                  <Sprout className="w-5 h-5" />
-                </span>
-                <ChevronRight className="w-4 h-4 text-mutedText group-hover:text-forest transition" />
-              </div>
-              <h4 className="text-xs font-bold text-forest-dark uppercase tracking-wider">
-                {language === 'bn' ? 'কৃষি জমি' : 'Crop Lands'}
-              </h4>
-              <p className="text-2xl font-black text-primaryText mt-1">
-                {language === 'bn' ? toBengaliDigits(lands.length) : lands.length}
-                <span className="text-xs font-normal text-secondaryText ml-1">
-                  {language === 'bn' ? 'টি প্লট' : 'plots'}
-                </span>
-              </p>
-              <p className="text-[11px] text-secondaryText mt-1">
-                {lands[0]?.currentCrop || 'ধান ও রবি ফসল'}
-              </p>
-            </div>
-
-            {/* Livestock Summary */}
-            <div 
-              onClick={() => onNavigate('livestock')}
-              className="p-4 rounded-2xl bg-white border border-softBorder hover:border-amber-300 cursor-pointer shadow-2xs transition group"
-            >
-              <div className="flex items-center justify-between mb-2">
-                <span className="p-2 rounded-xl bg-amber-50 text-amber-800">
-                  <Beef className="w-5 h-5" />
-                </span>
-                <ChevronRight className="w-4 h-4 text-mutedText group-hover:text-amber-800 transition" />
-              </div>
-              <h4 className="text-xs font-bold text-amber-900 uppercase tracking-wider">
-                {language === 'bn' ? 'পশু খামার' : 'Livestock'}
-              </h4>
-              <p className="text-2xl font-black text-primaryText mt-1">
-                {language === 'bn' ? toBengaliDigits(livestockFarms.reduce((acc, f) => acc + f.animalCount, 0)) : livestockFarms.reduce((acc, f) => acc + f.animalCount, 0)}
-                <span className="text-xs font-normal text-secondaryText ml-1">
-                  {language === 'bn' ? 'টি প্রাণী' : 'animals'}
-                </span>
-              </p>
-              <p className="text-[11px] text-secondaryText mt-1">
-                {livestockFarms.length} টি খামার শেড
-              </p>
-            </div>
-
-            {/* Fisheries Summary */}
-            <div 
-              onClick={() => onNavigate('fisheries')}
-              className="p-4 rounded-2xl bg-white border border-softBorder hover:border-blue-300 cursor-pointer shadow-2xs transition group"
-            >
-              <div className="flex items-center justify-between mb-2">
-                <span className="p-2 rounded-xl bg-blue-50 text-river">
-                  <Fish className="w-5 h-5" />
-                </span>
-                <ChevronRight className="w-4 h-4 text-mutedText group-hover:text-river transition" />
-              </div>
-              <h4 className="text-xs font-bold text-river-dark uppercase tracking-wider">
-                {language === 'bn' ? 'মৎস্য পুকুর' : 'Fisheries'}
-              </h4>
-              <p className="text-2xl font-black text-primaryText mt-1">
-                {language === 'bn' ? toBengaliDigits(ponds.length) : ponds.length}
-                <span className="text-xs font-normal text-secondaryText ml-1">
-                  {language === 'bn' ? 'টি পুকুর' : 'ponds'}
-                </span>
-              </p>
-              <p className="text-[11px] text-secondaryText mt-1">
-                {ponds[0]?.farmingType === 'polyculture' ? 'কার্প মিশ্র চাষ' : 'মনোসেক্স চাষ'}
-              </p>
-            </div>
-
-          </div>
-
-          {/* Marketplace Highlights: Active Negotiations & Orders */}
-          <div className="bg-white p-5 rounded-2xl border border-softBorder shadow-2xs">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center space-x-2">
-                <ShoppingBag className="w-5 h-5 text-clay" />
-                <h3 className="text-sm font-bold text-forest-dark">
-                  {language === 'bn' ? 'সরাসরি মার্কেটপ্লেস ও দরদাম কার্যক্রম' : 'Direct Marketplace & Active Orders'}
-                </h3>
-              </div>
-              <button
-                onClick={() => onNavigate('marketplace', 'inquiries')}
-                className="text-xs font-bold text-forest hover:underline flex items-center space-x-1"
-              >
-                <span>{language === 'bn' ? 'সব দেখুন' : 'View All'}</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {inquiries.slice(0, 2).map((inq) => (
-                <div
-                  key={inq.id}
-                  onClick={() => onNavigate('marketplace', 'inquiries')}
-                  className="p-3.5 rounded-xl border border-softBorder hover:border-clay/40 bg-warmWhite cursor-pointer transition shadow-2xs"
-                >
-                  <div className="flex items-center justify-between text-[11px] mb-1">
-                    <span className="font-bold text-clay truncate max-w-[140px]">{inq.buyerName}</span>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-status-warning border border-amber-200">
-                      {inq.status}
-                    </span>
-                  </div>
-                  <h5 className="text-xs font-bold text-forest-dark truncate">{inq.productName}</h5>
-                  <p className="text-[11px] text-secondaryText mt-1">
-                    {language === 'bn' ? 'প্রস্তাবিত দর:' : 'Offered:'}{' '}
-                    <strong>{formatCurrency(inq.currentAgreedPrice, language)}</strong> / {inq.unit}
-                    {' '}(পরিমাণ: {language === 'bn' ? toBengaliDigits(inq.requestedQuantity) : inq.requestedQuantity} {inq.unit})
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-
+          <button
+            onClick={() => setShowReminderModal(true)}
+            className="px-3 py-1.5 rounded-xl bg-forest-light hover:bg-forest text-forest hover:text-white text-xs font-bold transition flex items-center space-x-1 cursor-pointer active:scale-95"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>{language === 'bn' ? 'নতুন রিমাইন্ডার' : 'Add Task'}</span>
+          </button>
         </div>
 
-        {/* Right Column (1 Col): Market Price Intel & Phase 2 Callout */}
-        <div className="space-y-6">
-
-          {/* Regional Market Prices Snapshot */}
-          <div className="bg-white p-5 rounded-2xl border border-softBorder shadow-2xs">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center space-x-2">
-                <TrendingUp className="w-5 h-5 text-harvest-dark" />
-                <h3 className="text-sm font-bold text-forest-dark">
-                  {language === 'bn' ? 'আঞ্চলিক পাইকারি বাজার দর' : 'Regional Wholesale Prices'}
-                </h3>
-              </div>
-              <button
-                onClick={() => onNavigate('prices')}
-                className="text-xs font-bold text-forest hover:underline"
+        {reminders.length === 0 ? (
+          <div className="p-6 text-center text-secondaryText text-xs bg-rice/50 rounded-xl border border-dashed border-softBorder">
+            {language === 'bn' 
+              ? 'আজকের জন্য কোনো কাজ নির্ধারিত নেই। প্রয়োজনীয় কাজের জন্য নতুন রিমাইন্ডার তৈরি করুন।' 
+              : 'No scheduled farming tasks for today. Click "Add Task" to create one.'}
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {reminders.map((rem) => (
+              <div
+                key={rem.id}
+                onClick={() => toggleReminderComplete(rem.id)}
+                className={`p-3 rounded-xl border flex items-center justify-between cursor-pointer transition ${
+                  rem.isCompleted
+                    ? 'bg-rice/50 border-softBorder text-mutedText opacity-75'
+                    : 'bg-warmWhite border-softBorder text-primaryText hover:border-forest/40 shadow-2xs'
+                }`}
+                title={language === 'bn' ? 'সম্পন্ন করতে ক্লিক করুন' : 'Click to toggle completion'}
               >
-                {language === 'bn' ? 'বিস্তারিত' : 'All'}
-              </button>
-            </div>
-
-            <p className="text-[11px] text-secondaryText mb-3">
-              {language === 'bn' ? 'বগুড়া ও পার্শ্ববর্তী আড়তের আজকের দাম:' : 'Today’s verified market hub rates:'}
-            </p>
-
-            <div className="space-y-2.5">
-              {marketPrices.slice(0, 4).map((item) => (
-                <div key={item.id} className="p-2.5 rounded-xl bg-rice/50 border border-softBorder flex items-center justify-between">
-                  <div>
-                    <h5 className="text-xs font-bold text-forest-dark">
-                      {language === 'bn' ? item.productBn : item.product}
-                    </h5>
-                    <p className="text-[10px] text-secondaryText">
-                      {item.marketLocation}
+                <div className="flex items-center space-x-3 min-w-0">
+                  <div className={`w-5 h-5 rounded-md border flex items-center justify-center shrink-0 transition ${
+                    rem.isCompleted ? 'bg-forest border-forest text-white' : 'border-softBorder bg-white'
+                  }`}>
+                    {rem.isCompleted && <Check className="w-3.5 h-3.5" />}
+                  </div>
+                  <div className="min-w-0">
+                    <p className={`text-xs font-bold truncate ${rem.isCompleted ? 'line-through text-mutedText' : 'text-forest-dark'}`}>
+                      {language === 'bn' ? rem.titleBn : rem.title}
+                    </p>
+                    <p className="text-[11px] text-secondaryText truncate mt-0.5">
+                      {rem.entityName} {rem.stage ? `• ${rem.stage}` : ''}
                     </p>
                   </div>
-                  <div className="text-right">
-                    <span className="text-xs font-black text-forest-dark block">
-                      {formatCurrency(item.wholesalePrice, language)}
-                    </span>
-                    <span className="text-[10px] text-mutedText">
-                      প্রতি {item.unit}
-                    </span>
-                  </div>
                 </div>
-              ))}
-            </div>
 
-            <div className="mt-4 pt-3 border-t border-softBorder text-center">
-              <button
-                onClick={() => onNavigate('prices')}
-                className="w-full py-2 px-3 text-xs font-bold text-forest hover:bg-forest/5 rounded-xl border border-forest/20 transition"
-              >
-                {language === 'bn' ? 'মূল্য সতর্কবার্তা (Alert) সেট করুন' : 'Set Price Alert'}
-              </button>
-            </div>
+                <div className="flex items-center space-x-2 shrink-0 ml-2">
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                    rem.priority === 'high' 
+                      ? 'bg-red-50 text-status-error border border-red-200' 
+                      : 'bg-rice text-secondaryText'
+                  }`}>
+                    {rem.priority === 'high' ? (language === 'bn' ? 'জরুরি' : 'High') : (language === 'bn' ? 'সাধারণ' : 'Normal')}
+                  </span>
+                </div>
+              </div>
+            ))}
           </div>
-
-          {/* Phase 2 Feature Discovery Card */}
-          <div className="p-5 rounded-2xl bg-gradient-to-br from-forest-900 to-forest-dark text-white shadow-md">
-            <div className="flex items-center space-x-2 mb-2">
-              <Sparkles className="w-5 h-5 text-harvest" />
-              <span className="text-xs font-bold uppercase tracking-wider text-harvest">
-                {language === 'bn' ? 'পরবর্তী প্রযুক্তি' : 'Next-Gen'}
-              </span>
-            </div>
-            <h4 className="text-base font-bold mb-1">
-              {language === 'bn' ? 'স্যাটেলাইট পর্যবেক্ষণ ও বিকাশ এসক্রো' : 'Satellite Monitoring & Escrow'}
-            </h4>
-            <p className="text-xs text-rice/80 leading-relaxed mb-4">
-              {language === 'bn' 
-                ? 'আইওটি সেন্সর, উন্নত এআই ভয়েস বট ও ট্রাক বুকিং সিস্টেমের রোডম্যাপ দেখুন।' 
-                : 'Explore upcoming satellite crop health, IoT livestock collars and secure escrow logistics.'}
-            </p>
-            <button
-              onClick={() => setShowPhase2Modal(true)}
-              className="w-full py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold text-warmWhite border border-white/20 transition shadow-2xs"
-            >
-              {language === 'bn' ? 'রোডম্যাপ দেখুন (Phase 2)' : 'View Roadmap'}
-            </button>
-          </div>
-
-        </div>
-
+        )}
       </div>
 
+      {/* 6. SMALL MARKETPLACE PRODUCT PREVIEW */}
+      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-softBorder shadow-2xs">
+        <div className="flex items-center justify-between mb-3.5">
+          <div>
+            <h2 className="text-sm sm:text-base font-bold text-forest-dark flex items-center space-x-2">
+              <ShoppingBag className="w-4 h-4 text-clay" />
+              <span>{language === 'bn' ? 'মার্কেটপ্লেস পণ্য সমাহার' : 'Recent Produce in Marketplace'}</span>
+            </h2>
+            <p className="text-[11px] text-secondaryText mt-0.5">
+              {language === 'bn' ? 'সরাসরি কৃষকদের কাছ থেকে কেনার জন্য যাচাইকৃত পণ্য' : 'Directly available from registered local farmers'}
+            </p>
+          </div>
+
+          <button
+            onClick={() => onNavigate('marketplace')}
+            className="text-xs font-bold text-forest hover:text-forest-dark hover:underline flex items-center space-x-1 cursor-pointer shrink-0"
+          >
+            <span>{language === 'bn' ? 'সব পণ্য দেখুন' : 'View All'}</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {recentListings.length === 0 ? (
+          <div className="p-6 text-center text-secondaryText text-xs bg-rice/50 rounded-xl border border-dashed border-softBorder">
+            {language === 'bn' ? 'বর্তমানে কোনো পণ্য প্রকাশিত নেই।' : 'No active marketplace listings.'}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {recentListings.map((item) => (
+              <div
+                key={item.id}
+                onClick={() => onNavigate('marketplace')}
+                className="p-3 rounded-xl border border-softBorder bg-warmWhite hover:border-forest/40 hover:bg-white transition cursor-pointer shadow-2xs flex flex-col justify-between group"
+              >
+                <div>
+                  <div className="relative mb-2.5 rounded-lg overflow-hidden bg-rice aspect-video flex items-center justify-center">
+                    {item.images && item.images.length > 0 ? (
+                      <img 
+                        src={item.images[0]} 
+                        alt={item.productName} 
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                      />
+                    ) : (
+                      <ShoppingBag className="w-8 h-8 text-mutedText" />
+                    )}
+                    <span className="absolute top-1.5 right-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-white/90 text-forest backdrop-blur-xs shadow-2xs">
+                      {item.district}
+                    </span>
+                  </div>
+
+                  <h3 className="font-bold text-xs text-forest-dark group-hover:text-forest truncate">
+                    {item.productName}
+                  </h3>
+                  <p className="text-[11px] text-secondaryText mt-0.5">
+                    {language === 'bn' ? 'পরিমাণ:' : 'Qty:'} {language === 'bn' ? toBengaliDigits(item.quantity) : item.quantity} {item.unit}
+                  </p>
+                </div>
+
+                <div className="pt-2 mt-2 border-t border-softBorder flex items-center justify-between text-xs">
+                  <div>
+                    <span className="text-[10px] text-mutedText block leading-tight">
+                      {language === 'bn' ? 'দর:' : 'Price:'}
+                    </span>
+                    <span className="font-black text-forest">
+                      {formatCurrency(item.pricePerUnit, language)} / {item.unit}
+                    </span>
+                  </div>
+
+                  <span className="text-[11px] font-bold text-forest group-hover:underline flex items-center">
+                    {language === 'bn' ? 'দেখুন' : 'View'} →
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* CREATE REMINDER MODAL */}
       <CreateReminderModal
         isOpen={showReminderModal}
         onClose={() => setShowReminderModal(false)}
@@ -490,4 +489,3 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({ onNavigate, onOpen
     </div>
   );
 };
-
